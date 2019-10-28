@@ -1,6 +1,7 @@
-
 /*
- * Copyright (C) 2019  Hariharan Devarajan, Keith Bateman
+ * Copyright (C) 2019  SCS Lab <scs-help@cs.iit.edu>, Hariharan
+ * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
+ * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
  * This file is part of Basket
  * 
