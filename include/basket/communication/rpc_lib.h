@@ -138,6 +138,15 @@ private:
     Response call(uint16_t server_index,
                   CharStruct const &func_name,
                   Args... args);
+    /**
+     * Response should be RPCLIB_MSGPACK::object_handle for rpclib and
+     * tl::packed_response for thallium/mercury
+     */
+    template <typename Response, typename... Args>
+    Response call(CharStruct &server,
+                  uint16_t &port,
+                  CharStruct const &func_name,
+                  Args... args);
     template <typename Response, typename... Args>
     Response callWithTimeout(uint16_t server_index,
                   int timeout_ms,

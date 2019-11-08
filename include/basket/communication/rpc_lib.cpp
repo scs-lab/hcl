@@ -158,6 +158,62 @@ Response RPC::call(uint16_t server_index,
     }
 }
 
+template <typename Response, typename... Args>
+Response RPC::call(CharStruct &server,
+                   uint16_t &port,
+                   CharStruct const &func_name,
+                   Args... args) {
+    AutoTrace trace = AutoTrace("RPC::call", server,port, func_name);
+    switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+        case RPCLIB: {
+            auto client = rpc::client(server.c_str(),port);
+            /*client.set_timeout(5000);*/
+            return client.call(func_name.c_str(), std::forward<Args>(args)...);
+            break;
+        }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+        case THALLIUM_TCP: {
+            std::shared_ptr<tl::engine> thallium_client;
+            if (BASKET_CONF->IS_SERVER) {
+                thallium_client = std::make_shared<tl::engine>(BASKET_CONF->TCP_CONF.c_str(), MARGO_CLIENT_MODE);
+            }
+            else {
+                thallium_client = thallium_engine;
+            }
+
+            tl::remote_procedure remote_procedure = thallium_client->define(func_name.c_str());
+            // Setup args for RDMA bulk transfer
+            // std::vector<std::pair<void*,std::size_t>> segments(num_args);
+
+            return remote_procedure.on(thallium_endpoints[server_index])(std::forward<Args>(args)...);
+            break;
+        }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+        case THALLIUM_ROCE: {
+            std::shared_ptr<tl::engine> thallium_client;
+            if (BASKET_CONF->IS_SERVER) {
+                thallium_client = std::make_shared<tl::engine>(BASKET_CONF->VERBS_CONF.c_str(), MARGO_CLIENT_MODE);
+            }
+            else {
+                thallium_client = thallium_engine;
+            }
+
+            tl::remote_procedure remote_procedure = thallium_client->define(func_name.c_str());
+
+            // Setup args for RDMA bulk transfer
+            // std::vector<std::pair<void*,std::size_t>> segments(num_args);
+            // tl::bulk bulk_handle = remote_procedure.on(server_endpoint)(std::forward<Args>(args)...);
+            // return std::make_pair(lookup_str, bulk_handle);
+
+            return remote_procedure.on(thallium_endpoints[server_index])(std::forward<Args>(args)...);
+            break;
+        }
+#endif
+    }
+}
 
 template <typename Response, typename... Args>
 std::future<Response> RPC::async_call(uint16_t server_index,
