@@ -112,30 +112,52 @@ set<KeyType, Compare>::set(CharStruct name_)
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
                 {
 
-                    std::function<void(const tl::request &, KeyType &)> putFunc(
-                        std::bind(&set<KeyType, Compare>::ThalliumLocalPut, this,
-                                  std::placeholders::_1, std::placeholders::_2));
-                    // std::function<void(const tl::request &, KeyType &)> getFunc(
-                    //     std::bind(&set<KeyType, Compare>::ThalliumLocalGet, this,
-                    //               std::placeholders::_1, std::placeholders::_2));
-                    // std::function<void(const tl::request &, KeyType &)> eraseFunc(
-                    //     std::bind(&set<KeyType, Compare>::ThalliumLocalErase, this,
-                    //               std::placeholders::_1, std::placeholders::_2));
-                    // std::function<void(const tl::request &)>
-                    //         getAllDataInServerFunc(std::bind(
-                    //             &set<KeyType, Compare>::ThalliumLocalGetAllDataInServer,
-                    //             this, std::placeholders::_1));
-                    std::function<void(const tl::request &, KeyType &)>
-                            containsInServerFunc(std::bind(&set<KeyType,
-                                                           Compare>::ThalliumLocalContainsInServer, this,
-                                                           std::placeholders::_1));
+                std::function<void(const tl::request &, KeyType &)> putFunc(
+                    std::bind(&set<KeyType, Compare>::ThalliumLocalPut, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &, KeyType &)> getFunc(
+                    std::bind(&set<KeyType, Compare>::ThalliumLocalGet, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &, KeyType &)> eraseFunc(
+                    std::bind(&set<KeyType, Compare>::ThalliumLocalErase, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &)>
+                        getAllDataInServerFunc(std::bind(
+                            &set<KeyType, Compare>::ThalliumLocalGetAllDataInServer,
+                            this, std::placeholders::_1));
+                std::function<void(const tl::request &, KeyType &, KeyType &)>
+                        containsInServerFunc(std::bind(&set<KeyType,
+                                                       Compare>::ThalliumLocalContainsInServer, this,
+                                                       std::placeholders::_1,
+                                                       std::placeholders::_2,
+						       std::placeholders::_3));
+                std::function<void(const tl::request &)>
+                        seekFirstFunc(std::bind(&set<KeyType,
+						Compare>::ThalliumLocalSeekFirst, this,
+						std::placeholders::_1));
+                std::function<void(const tl::request &)>
+                        popFirstFunc(std::bind(&set<KeyType,
+					       Compare>::ThalliumLocalPopFirst, this,
+					       std::placeholders::_1));
+                std::function<void(const tl::request &)>
+                        sizeFunc(std::bind(&set<KeyType,
+                                           Compare>::ThalliumLocalSize, this,
+					   std::placeholders::_1));
+                std::function<void(const tl::request &, uint32_t)> localSeekFirstNFunc(
+                        std::bind(&set<KeyType, Compare>::ThalliumLocalSeekFirstN, this,
+				  std::placeholders::_1,
+				  std::placeholders::_2));
+                rpc->bind(func_prefix+"_Put", putFunc);
+                rpc->bind(func_prefix+"_Get", getFunc);
+                rpc->bind(func_prefix+"_Erase", eraseFunc);
+                rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
+                rpc->bind(func_prefix+"_Contains", containsInServerFunc);
 
-                    rpc->bind(func_prefix+"_Put", putFunc);
-                    // rpc->bind(func_prefix+"_Get", getFunc);
-                    // rpc->bind(func_prefix+"_Erase", eraseFunc);
-                    // rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
-                    rpc->bind(func_prefix+"_Contains", containsInServerFunc);
-                    break;
+                rpc->bind(func_prefix+"_SeekFirst", seekFirstFunc);
+                rpc->bind(func_prefix+"_PopFirst", popFirstFunc);
+                // rpc->bind(func_prefix+"_SeekFirstN", localSeekFirstNFunc);
+                rpc->bind(func_prefix+"_Size", sizeFunc);
+		break;
                 }
 #endif
         }
@@ -377,7 +399,7 @@ std::pair<bool, KeyType> set<KeyType, Compare>::LocalSeekFirst() {
 template<typename KeyType, typename Compare>
 std::pair<bool, KeyType> set<KeyType, Compare>::SeekFirst(uint16_t &key_int) {
     if (key_int == my_server && server_on_node) {
-        return LocalPopFirst();
+        return LocalSeekFirst();
     } else {
         AutoTrace trace = AutoTrace("basket::set::SeekFirst(remote)",
                                     key_int);

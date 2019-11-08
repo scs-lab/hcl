@@ -17,7 +17,6 @@
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -28,9 +27,9 @@
 #include <signal.h>
 #include <execinfo.h>
 #include <chrono>
-#include <unordered_map>
+#include <set>
 #include <basket/common/data_structures.h>
-#include <basket/unordered_map/unordered_map.h>
+#include <basket/set/set.h>
 
 struct KeyType{
     size_t a;
@@ -49,6 +48,15 @@ struct KeyType{
     }
     bool operator<(const KeyType &o) const {
         return a < o.a;
+    }
+    bool operator<=(const KeyType &o) const {
+        return a < o.a;
+    }
+    bool operator>(const KeyType &o) const {
+        return a > o.a;
+    }
+    bool operator>=(const KeyType &o) const {
+        return a >= o.a;
     }
     bool Contains(const KeyType &o) const {
         return a==o.a;
@@ -139,152 +147,157 @@ int main (int argc,char* argv[])
     BASKET_CONF->SERVER_ON_NODE = server_on_node || is_server;
     BASKET_CONF->SERVER_LIST_PATH = "./server_list";
 
-    basket::unordered_map<KeyType,std::array<int, array_size>> *map;
+    basket::set<KeyType> *set;
     if (is_server) {
-        map = new basket::unordered_map<KeyType,std::array<int,array_size>>();
+        set = new basket::set<KeyType>();
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (!is_server) {
-        map = new basket::unordered_map<KeyType,std::array<int,array_size>>();
+        set = new basket::set<KeyType>();
     }
 
-    std::unordered_map<KeyType,std::array<int, array_size>> lmap=std::unordered_map<KeyType,std::array<int, array_size>>();
+    std::set<KeyType> lset=std::set<KeyType>();
 
     MPI_Comm client_comm;
     MPI_Comm_split(MPI_COMM_WORLD, !is_server, my_rank, &client_comm);
     int client_comm_size;
     MPI_Comm_size(client_comm, &client_comm_size);
-   /* if(is_server){
-        std::function<int(int)> func=[](int x){ std::cout<<x<<std::endl;return x; };
-        int a;
-        std::function<std::pair<bool,int>(KeyType&,std::array<int, array_size>&,std::string,int)> putFunc(std::bind(&basket::unordered_map<KeyType,std::array<int,
-                                                                                                                    array_size>>::LocalPutWithCallback<int,int>,map,std::placeholders::_1, std::placeholders::_2,std::placeholders::_3, std::placeholders::_4));
-        map->Bind("CB_Put", func, "APut",putFunc);
-    }*/
+    // if(is_server){
+    //     std::function<int(int)> func=[](int x){ std::cout<<x<<std::endl;return x; };
+    //     int a;
+    //     std::function<std::pair<bool,int>(KeyType&,std::array<int, array_size>&,std::string,int)> putFunc(std::bind(&basket::set<KeyType,std::array<int,
+    //                                                                                                                 array_size>>::LocalPutWithCallback<int,int>,set,std::placeholders::_1, std::placeholders::_2,std::placeholders::_3, std::placeholders::_4));
+    //     set->Bind("CB_Put", func, "APut",putFunc);
+    // }
     MPI_Barrier(MPI_COMM_WORLD);
     if (!is_server) {
-        Timer llocal_map_timer=Timer();
+        Timer llocal_set_timer=Timer();
         std::hash<KeyType> keyHash;
-        /*Local std::map test*/
+        /*Local std::set test*/
         for(int i=0;i<num_request;i++){
             size_t val=my_server;
-            llocal_map_timer.resumeTime();
+            llocal_set_timer.resumeTime();
             size_t key_hash = keyHash(KeyType(val))%num_servers;
             if (key_hash == my_server && is_server){}
-            lmap.insert_or_assign(KeyType(val), my_vals);
-            llocal_map_timer.pauseTime();
+            lset.insert(KeyType(val));
+            llocal_set_timer.pauseTime();
         }
 
-        double llocal_map_throughput=num_request/llocal_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double llocal_set_throughput=num_request/llocal_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
-        Timer llocal_get_map_timer=Timer();
+        Timer llocal_get_set_timer=Timer();
         for(int i=0;i<num_request;i++){
             size_t val=my_server;
-            llocal_get_map_timer.resumeTime();
+            llocal_get_set_timer.resumeTime();
             size_t key_hash = keyHash(KeyType(val))%num_servers;
             if (key_hash == my_server && is_server){}
-            auto iterator = lmap.find(KeyType(val));
-            auto result = iterator->second;
-            llocal_get_map_timer.pauseTime();
+            auto result = lset.find(KeyType(val));
+            if (result != lset.end()){}
+            llocal_get_set_timer.pauseTime();
         }
-        double llocal_get_map_throughput=num_request/llocal_get_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double llocal_get_set_throughput=num_request/llocal_get_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
         if (my_rank == 0) {
-            printf("llocal_map_throughput put: %f\n",llocal_map_throughput);
-            printf("llocal_map_throughput get: %f\n",llocal_get_map_throughput);
+            printf("llocal_set_throughput put: %f\n",llocal_set_throughput);
+            printf("llocal_set_throughput get: %f\n",llocal_get_set_throughput);
         }
         MPI_Barrier(client_comm);
 
-        Timer local_map_timer=Timer();
-        /*Local map test*/
+        Timer local_set_timer=Timer();
+        uint16_t my_server_key = my_server % num_servers;
+        /*Local set test*/
         for(int i=0;i<num_request;i++){
             size_t val=my_server;
             auto key=KeyType(val);
-            local_map_timer.resumeTime();
-            map->Put(key,my_vals);
-            local_map_timer.pauseTime();
+            local_set_timer.resumeTime();
+            set->Put(key);
+            local_set_timer.pauseTime();
         }
-        double local_map_throughput=num_request/local_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double local_set_throughput=num_request/local_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
-        Timer local_get_map_timer=Timer();
-        /*Local map test*/
+        Timer local_get_set_timer=Timer();
+        /*Local set test*/
         for(int i=0;i<num_request;i++){
             size_t val=my_server;
             auto key=KeyType(val);
-            local_get_map_timer.resumeTime();
-            auto result = map->Get(key);
-            local_get_map_timer.pauseTime();
+            size_t key_hash = keyHash(KeyType(val))%num_servers;
+            if (key_hash == my_server && is_server){}
+            local_get_set_timer.resumeTime();
+            auto result = set->Get(key);
+            local_get_set_timer.pauseTime();
         }
 
-        double local_get_map_throughput=num_request/local_get_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double local_get_set_throughput=num_request/local_get_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
         double local_put_tp_result, local_get_tp_result;
         if (client_comm_size > 1) {
-            MPI_Reduce(&local_map_throughput, &local_put_tp_result, 1,
+            MPI_Reduce(&local_set_throughput, &local_put_tp_result, 1,
                        MPI_DOUBLE, MPI_SUM, 0, client_comm);
-            MPI_Reduce(&local_get_map_throughput, &local_get_tp_result, 1,
+            MPI_Reduce(&local_get_set_throughput, &local_get_tp_result, 1,
                        MPI_DOUBLE, MPI_SUM, 0, client_comm);
             local_put_tp_result /= client_comm_size;
             local_get_tp_result /= client_comm_size;
         }
         else {
-            local_put_tp_result = local_map_throughput;
-            local_get_tp_result = local_get_map_throughput;
+            local_put_tp_result = local_set_throughput;
+            local_get_tp_result = local_get_set_throughput;
         }
 
         if (my_rank==0) {
-            printf("local_map_throughput put: %f\n", local_put_tp_result);
-            printf("local_map_throughput get: %f\n", local_get_tp_result);
+            printf("local_set_throughput put: %f\n", local_put_tp_result);
+            printf("local_set_throughput get: %f\n", local_get_tp_result);
         }
 
         MPI_Barrier(client_comm);
 
-        Timer remote_map_timer=Timer();
-        /*Remote map test*/
+        Timer remote_set_timer=Timer();
+        /*Remote set test*/
+        uint16_t my_server_remote_key = (my_server + 1) % num_servers;
         for(int i=0;i<num_request;i++){
             size_t val = my_server+1;
             auto key=KeyType(val);
-            remote_map_timer.resumeTime();
-            map->Put(key
-                    ,my_vals);
-            remote_map_timer.pauseTime();
+            remote_set_timer.resumeTime();
+            set->Put(key);
+            remote_set_timer.pauseTime();
         }
-        double remote_map_throughput=num_request/remote_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double remote_set_throughput=num_request/remote_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
         MPI_Barrier(client_comm);
 
-        Timer remote_get_map_timer=Timer();
-        /*Remote map test*/
+        Timer remote_get_set_timer=Timer();
+        /*Remote set test*/
         for(int i=0;i<num_request;i++){
             size_t val = my_server+1;
             auto key=KeyType(val);
-            remote_get_map_timer.resumeTime();
-            map->Get(key);
-            remote_get_map_timer.pauseTime();
+            remote_get_set_timer.resumeTime();
+            size_t key_hash = keyHash(KeyType(val))%num_servers;
+            if (key_hash == my_server && is_server){}
+            set->Get(key);
+            remote_get_set_timer.pauseTime();
         }
-        double remote_get_map_throughput=num_request/remote_get_map_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
+        double remote_get_set_throughput=num_request/remote_get_set_timer.getElapsedTime()*1000*size_of_elem*my_vals.size()/1024/1024;
 
         double remote_put_tp_result, remote_get_tp_result;
         if (client_comm_size > 1) {
-            MPI_Reduce(&remote_map_throughput, &remote_put_tp_result, 1,
+            MPI_Reduce(&remote_set_throughput, &remote_put_tp_result, 1,
                        MPI_DOUBLE, MPI_SUM, 0, client_comm);
             remote_put_tp_result /= client_comm_size;
-            MPI_Reduce(&remote_get_map_throughput, &remote_get_tp_result, 1,
+            MPI_Reduce(&remote_get_set_throughput, &remote_get_tp_result, 1,
                        MPI_DOUBLE, MPI_SUM, 0, client_comm);
             remote_get_tp_result /= client_comm_size;
         }
         else {
-            remote_put_tp_result = remote_map_throughput;
-            remote_get_tp_result = remote_get_map_throughput;
+            remote_put_tp_result = remote_set_throughput;
+            remote_get_tp_result = remote_get_set_throughput;
         }
 
         if(my_rank == 0) {
-            printf("remote map throughput (put): %f\n",remote_put_tp_result);
-            printf("remote map throughput (get): %f\n",remote_get_tp_result);
+            printf("remote set throughput (put): %f\n",remote_put_tp_result);
+            printf("remote set throughput (get): %f\n",remote_get_tp_result);
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    delete(map);
+    delete(set);
     MPI_Finalize();
     exit(EXIT_SUCCESS);
 }

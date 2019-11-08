@@ -79,6 +79,10 @@
 #include <iostream>
 #include <future>
 
+#if !defined(BASKET_ENABLE_RPCLIB) && !defined(BASKET_ENABLE_THALLIUM_TCP) && !defined(BASKET_ENABLE_THALLIUM_ROCE)
+#error "Please define an RPC backend (e.g., -DBASKET_ENABLE_RPCLIB)"
+#endif
+
 namespace bip = boost::interprocess;
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
 namespace tl = thallium;
@@ -90,10 +94,15 @@ private:
     std::string name;
 #ifdef BASKET_ENABLE_RPCLIB
     std::shared_ptr<rpc::server> rpclib_server;
+    // We can't use a std::vector<rpc::client> for these since rpc::client is neither copy
+    // nor move constructible. See https://github.com/rpclib/rpclib/issues/128
+    std::vector<std::unique_ptr<rpc::client>> rpclib_clients;
 #endif
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
     std::shared_ptr<tl::engine> thallium_engine;
     CharStruct engine_init_str;
+    std::vector<tl::endpoint> thallium_endpoints;
+    void init_engine_and_endpoints(CharStruct conf);
     /*std::promise<void> thallium_exit_signal;
 
       void runThalliumServer(std::future<void> futureObj){

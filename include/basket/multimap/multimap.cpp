@@ -113,7 +113,8 @@ multimap<KeyType, MappedType,
                     std::function<void(const tl::request &, KeyType &)>
                             containsInServerFunc(std::bind(&multimap<KeyType, MappedType,
                                                            Compare>::ThalliumLocalContainsInServer, this,
-                                                           std::placeholders::_1));
+                                                           std::placeholders::_1,
+							   std::placeholders::_2));
 
                     rpc->bind(func_prefix+"_Put", putFunc);
                     rpc->bind(func_prefix+"_Get", getFunc);

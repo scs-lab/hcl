@@ -36,6 +36,7 @@
 #include <execinfo.h>
 #include <iostream>
 #include <csignal>
+#include <tuple>
 
 
 /**
@@ -124,25 +125,25 @@ using std::string;
 using namespace std;
 class AutoTrace
 {
-#if  defined(HERMES_TIMER)
+#if  defined(BASKET_TIMER)
     Timer timer;
 #endif
     static int rank,item;
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
     string m_line;
 #endif
   public:
     template <typename... Args>
     AutoTrace(
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
             std::string string,
 #endif
             Args... args)
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
     :m_line(string)
 #endif
     {
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
         char thread_name[256];
         pthread_getname_np(pthread_self(), thread_name,256);
         std::stringstream stream;
@@ -151,49 +152,47 @@ class AutoTrace
         stream << "\033[31m";
         stream <<++item<<";"<<thread_name<<";"<< rank << ";" <<m_line << ";";
 #endif
-#if  defined(HERMES_TIMER)
+#if  defined(BASKET_TIMER)
         stream <<";;";
 #endif
-#ifdef HERMES_TRACE
+#ifdef BASKET_TRACE
         auto args_obj = std::make_tuple(args...);
         const ulong args_size = std::tuple_size<decltype(args_obj)>::value;
         stream << "args(";
 
         if(args_size == 0) stream << "Void";
-        else{
-            static_for<args_size>( [&](auto w){
-                                       stream << std::get<w.n>(args_obj) << ", ";
-                                   });
+        else {
+            std::apply([&stream](auto&&... args) {((stream << args << ", "), ...);}, args_obj);
         }
         stream << ");";
 #endif
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
         stream <<"start"<< endl;
         stream << "\033[00m";
         cout << stream.str();
 #endif
-#ifdef HERMES_TIMER
-        timer.startTime();
+#ifdef BASKET_TIMER
+        timer.resumeTime();
 #endif
     }
 
     ~AutoTrace()
     {
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
         std::stringstream stream;
         char thread_name[256];
         pthread_getname_np(pthread_self(), thread_name,256);
         stream << "\033[31m";
         stream <<item-- <<";"<<std::string(thread_name)<<";"<< rank << ";" << m_line << ";";
 #endif
-#if defined(HERMES_TRACE)
+#if defined(BASKET_TRACE)
         stream  <<";";
 #endif
-#ifdef HERMES_TIMER
-        double end_time=timer.endTime();
+#ifdef BASKET_TIMER
+        double end_time=timer.pauseTime();
         stream  <<end_time<<";msecs;";
 #endif
-#if defined(HERMES_TRACE) || defined(HERMES_TIMER)
+#if defined(BASKET_TRACE) || defined(BASKET_TIMER)
         stream  <<"finish"<< endl;
         stream << "\033[00m";
         cout << stream.str();

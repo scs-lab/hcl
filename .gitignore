@@ -10,16 +10,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 .idea/
-build/DartConfiguration.tcl
-build/basket.pc
-build/libbasket.so
-build/libbasket.so.1
-build/libbasket.so.1.0.0
-build/test/multimap_test
-build/test/unordered_map_test
-build/test/map_test
-build/test/multimap_test
-build/test/queue_test
+build/
 test/priority_queue_test
 test/multimap_test
 test/unordered_map_test

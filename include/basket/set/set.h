@@ -106,12 +106,20 @@ class set {
     std::pair<bool, KeyType> LocalSeekFirst();
     std::pair<bool, KeyType> LocalPopFirst();
     size_t LocalSize();
+    std::pair<bool, std::vector<KeyType>> LocalSeekFirstN(uint32_t n);
+
 
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
-    THALLIUM_DEFINE(LocalPut, (key,data), KeyType &key, MappedType &data)
+    THALLIUM_DEFINE(LocalPut, (key), KeyType &key)
     THALLIUM_DEFINE(LocalGet, (key), KeyType &key)
     THALLIUM_DEFINE(LocalErase, (key), KeyType &key)
-    THALLIUM_DEFINE(LocalContainsInServer, (key), KeyType &key)
+    THALLIUM_DEFINE(LocalContainsInServer, (key_start, key_end), KeyType &key_start,
+		    KeyType &key_end)
+    THALLIUM_DEFINE(LocalSeekFirstN, (n), uint32_t n)
+
+    THALLIUM_DEFINE1(LocalSize)
+    THALLIUM_DEFINE1(LocalSeekFirst)
+    THALLIUM_DEFINE1(LocalPopFirst)
     THALLIUM_DEFINE1(LocalGetAllDataInServer)
 #endif
     
@@ -125,10 +133,9 @@ class set {
 
     std::vector<KeyType> ContainsInServer(KeyType &key_start,KeyType &key_end);
     std::vector<KeyType> GetAllDataInServer();
-    std::pair<bool, std::vector<KeyType>> LocalSeekFirstN(uint32_t n);
-    std::pair<bool, std::vector<KeyType>> SeekFirstN(uint16_t &key_int,uint32_t n);
     std::pair<bool, KeyType> SeekFirst(uint16_t &key_int);
     std::pair<bool, KeyType> PopFirst(uint16_t &key_int);
+    std::pair<bool, std::vector<KeyType>> SeekFirstN(uint16_t &key_int,uint32_t n);
     size_t Size(uint16_t &key_int);
 };
 

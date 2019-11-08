@@ -111,10 +111,12 @@ map<KeyType, MappedType, Compare>::map(std::string name_)
                             getAllDataInServerFunc(std::bind(
                                 &map<KeyType, MappedType, Compare>::ThalliumLocalGetAllDataInServer,
                                 this, std::placeholders::_1));
-                    std::function<void(const tl::request &, KeyType &)>
+                    std::function<void(const tl::request &, KeyType &, KeyType &)>
                             containsInServerFunc(std::bind(&map<KeyType, MappedType,
                                                            Compare>::ThalliumLocalContainsInServer, this,
-                                                           std::placeholders::_1));
+                                                           std::placeholders::_1,
+							   std::placeholders::_2,
+							   std::placeholders::_3));
 
                     rpc->bind(func_prefix+"_Put", putFunc);
                     rpc->bind(func_prefix+"_Get", getFunc);

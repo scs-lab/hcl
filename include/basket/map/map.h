@@ -109,7 +109,7 @@ class map {
     THALLIUM_DEFINE(LocalPut, (key,data), KeyType &key, MappedType &data)
     THALLIUM_DEFINE(LocalGet, (key), KeyType &key)
     THALLIUM_DEFINE(LocalErase, (key), KeyType &key)
-    THALLIUM_DEFINE(LocalContainsInServer, (key), KeyType &key)
+    THALLIUM_DEFINE(LocalContainsInServer, (key_start, key_end), KeyType &key_start, KeyType &key_end)
     THALLIUM_DEFINE1(LocalGetAllDataInServer)
 #endif
     
