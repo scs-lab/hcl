@@ -92,7 +92,7 @@ class queue {
   public:
     ~queue();
 
-    explicit queue(std::string name_ = "TEST_QUEUE");
+    explicit queue(std::string name_ = "TEST_QUEUE", uint16_t port=BASKET_CONF->RPC_PORT);
     Queue * data(){
         if(server_on_node || is_server) return my_queue;
         else nullptr;

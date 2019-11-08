@@ -29,7 +29,7 @@ set<KeyType, Compare>::~set() {
 }
 
 template<typename KeyType, typename Compare>
-set<KeyType, Compare>::set(CharStruct name_)
+set<KeyType, Compare>::set(CharStruct name_, uint16_t port)
         : is_server(BASKET_CONF->IS_SERVER), my_server(BASKET_CONF->MY_SERVER),
           num_servers(BASKET_CONF->NUM_SERVERS),
           comm_size(1), my_rank(0), memory_allocated(BASKET_CONF->MEMORY_ALLOCATED),
@@ -44,7 +44,7 @@ set<KeyType, Compare>::set(CharStruct name_)
        spawned on one node*/
     this->name += "_" + std::to_string(my_server);
     /* if current rank is a server */
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(BASKET_CONF->RPC_PORT);
+    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
         /* Delete existing instance of shared memory space*/
         boost::interprocess::file_mapping::remove(backed_file.c_str());
@@ -186,7 +186,7 @@ bool set<KeyType, Compare>::LocalPut(KeyType &key) {
     AutoTrace trace = AutoTrace("basket::set::Put(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
     myset->insert(key);
-    
+
     return true;
 }
 
@@ -251,7 +251,7 @@ bool set<KeyType, Compare>::LocalErase(KeyType &key) {
     AutoTrace trace = AutoTrace("basket::set::Erase(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
     size_t s = myset->erase(key);
-    
+
     return s > 0;
 }
 

@@ -31,13 +31,14 @@ unordered_map<KeyType, MappedType>::~unordered_map() {
 }
 
 template<typename KeyType, typename MappedType>
-unordered_map<KeyType, MappedType>::unordered_map(CharStruct name_)
+unordered_map<KeyType, MappedType>::unordered_map(CharStruct name_, uint16_t port)
         : is_server(BASKET_CONF->IS_SERVER), my_server(BASKET_CONF->MY_SERVER),
           num_servers(BASKET_CONF->NUM_SERVERS),
           comm_size(1), my_rank(0), memory_allocated(BASKET_CONF->MEMORY_ALLOCATED),
           name(name_), segment(), myHashMap(), func_prefix(name_),
           backed_file(BASKET_CONF->BACKED_FILE_DIR + PATH_SEPARATOR + name_+"_"+std::to_string(my_server)),
-          server_on_node(BASKET_CONF->SERVER_ON_NODE) {
+          server_on_node(BASKET_CONF->SERVER_ON_NODE),
+          size_occupied(0){
     // init my_server, num_servers, server_on_node, processor_name from RPC
     AutoTrace trace = AutoTrace("basket::unordered_map");
 
@@ -143,8 +144,8 @@ template<typename KeyType, typename MappedType>
 bool unordered_map<KeyType, MappedType>::LocalPut(KeyType &key,
                                                   MappedType &data) {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>lock(*mutex);
-    myHashMap->insert_or_assign(key, data);
-    
+    auto iter = myHashMap->insert_or_assign(key, data);
+    if(iter.second) size_occupied += CalculateSize<KeyType>().GetSize(key) + CalculateSize<MappedType>().GetSize(data);
     return true;
 }
 /**
@@ -160,14 +161,8 @@ bool unordered_map<KeyType, MappedType>::Put(KeyType &key,
     if (key_int == my_server && server_on_node) {
         return LocalPut(key, data);
     } else {
-// #ifdef BASKET_ENABLE_THALLIUM_ROCE
-//         tl::bulk bulk_handle = rpc->prep_rdma_client<MappedType>(data);
-//         return RPC_CALL_WRAPPER("_Put", key_int, bool,
-//                                 bulk_handle, key);
-// #else
         return RPC_CALL_WRAPPER("_Put", key_int, bool,
                                 key, data);
-// #endif
     }
 }
 
@@ -321,9 +316,12 @@ std::pair<bool, MappedType>
 unordered_map<KeyType, MappedType>::LocalErase(KeyType &key) {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
-    size_t s = myHashMap->erase(key);
-    
-    return std::pair<bool, MappedType>(s > 0, MappedType());
+    typename MyHashMap::iterator iterator = myHashMap->find(key);
+    if (iterator != myHashMap->end()) {
+        size_occupied -= CalculateSize<KeyType>().GetSize(key) + CalculateSize<MappedType>().GetSize(iterator->second);
+        auto iter = myHashMap->erase(iterator);
+        return std::pair<bool, MappedType>(true, iterator->second);
+    }else return std::pair<bool, MappedType>(false, MappedType());
 }
 
 template<typename KeyType, typename MappedType>

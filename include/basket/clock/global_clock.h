@@ -56,7 +56,7 @@ class global_clock {
 
   public:
     ~global_clock();
-    global_clock(std::string name_ = "TEST_GLOBAL_CLOCK");
+    global_clock(std::string name_ = "TEST_GLOBAL_CLOCK", uint16_t port=BASKET_CONF->RPC_PORT);
     chrono_time * data(){
         if(server_on_node || is_server) return start;
         else nullptr;

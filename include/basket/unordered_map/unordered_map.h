@@ -97,11 +97,11 @@ class unordered_map {
     bool server_on_node;
     std::unordered_map<CharStruct, void*> binding_map;
     CharStruct backed_file;
-
   public:
+    really_long size_occupied;
     ~unordered_map();
 
-    explicit unordered_map(CharStruct name_ = std::string("TEST_UNORDERED_MAP"));
+    explicit unordered_map(CharStruct name_ = std::string("TEST_UNORDERED_MAP"), uint16_t port=BASKET_CONF->RPC_PORT);
     MyHashMap* data(){
         if(server_on_node || is_server) return myHashMap;
         else nullptr;

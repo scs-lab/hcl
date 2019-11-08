@@ -26,7 +26,7 @@ global_sequence::~global_sequence() {
     if (is_server) bip::file_mapping::remove(backed_file.c_str());
 }
 
-global_sequence::global_sequence(std::string name_)
+global_sequence::global_sequence(std::string name_, uint16_t port)
         : is_server(BASKET_CONF->IS_SERVER), my_server(BASKET_CONF->MY_SERVER),
           num_servers(BASKET_CONF->NUM_SERVERS),
           comm_size(1), my_rank(0), memory_allocated(BASKET_CONF->MEMORY_ALLOCATED),
@@ -38,7 +38,7 @@ global_sequence::global_sequence(std::string name_)
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     name = name+"_"+std::to_string(my_server);
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(BASKET_CONF->RPC_PORT);
+    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
         switch (BASKET_CONF->RPC_IMPLEMENTATION) {
 #ifdef BASKET_ENABLE_RPCLIB

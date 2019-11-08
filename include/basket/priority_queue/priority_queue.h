@@ -96,7 +96,7 @@ class priority_queue {
   public:
     ~priority_queue();
 
-    explicit priority_queue(std::string name_ = "TEST_PRIORITY_QUEUE");
+    explicit priority_queue(std::string name_ = "TEST_PRIORITY_QUEUE", uint16_t port=BASKET_CONF->RPC_PORT);
     Queue * data(){
         if(server_on_node || is_server) return queue;
         else nullptr;

@@ -96,7 +96,7 @@ class set {
         if(server_on_node || is_server) return myset;
         else nullptr;
     }
-    explicit set(CharStruct name_ = std::string("TEST_SET"));
+    explicit set(CharStruct name_ = "TEST_SET", uint16_t port=BASKET_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key);
     bool LocalGet(KeyType &key);
