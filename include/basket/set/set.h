@@ -67,11 +67,11 @@ namespace basket {
  * @tparam MappedType, the value of the Set
  */
 
-template<typename KeyType, typename Compare =
+template<typename KeyType, typename Hash = std::hash<KeyType>, typename Compare =
          std::less<KeyType>>
 class set {
   private:
-    std::hash<KeyType> keyHash;
+    Hash keyHash;
     /** Class Typedefs for ease of use **/
     typedef boost::interprocess::allocator<KeyType, boost::interprocess::managed_mapped_file::segment_manager>
     ShmemAllocator;

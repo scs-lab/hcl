@@ -72,15 +72,15 @@ namespace basket {
  *
  * @tparam MappedType, the value of the HashMap
  */
-template<typename KeyType, typename MappedType>
+template<typename KeyType, typename MappedType,typename Hash = std::hash<KeyType>>
 class unordered_map {
   private:
-    std::hash<KeyType> keyHash;
+    Hash keyHash;
     /** Class Typedefs for ease of use **/
     typedef std::pair<const KeyType, MappedType> ValueType;
     typedef boost::interprocess::allocator<ValueType, boost::interprocess::managed_mapped_file::segment_manager> ShmemAllocator;
     typedef boost::interprocess::managed_mapped_file managed_segment;
-    typedef boost::unordered::unordered_map<KeyType, MappedType, std::hash<KeyType>,
+    typedef boost::unordered::unordered_map<KeyType, MappedType, Hash,
                                                                 std::equal_to<KeyType>,
                                                                 ShmemAllocator>
                                                                 MyHashMap;
