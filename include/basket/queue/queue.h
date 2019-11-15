@@ -79,7 +79,6 @@ class queue {
     /** Class attributes**/
     int comm_size, my_rank, num_servers;
     uint16_t  my_server;
-    std::shared_ptr<RPC> rpc;
     really_long memory_allocated;
     bool is_server;
     boost::interprocess::managed_mapped_file segment;
@@ -90,6 +89,7 @@ class queue {
     CharStruct backed_file;
 
   public:
+    std::shared_ptr<RPC> rpc;
     ~queue();
 
     explicit queue(std::string name_ = "TEST_QUEUE", uint16_t port=BASKET_CONF->RPC_PORT);
