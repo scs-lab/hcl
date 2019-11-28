@@ -87,9 +87,7 @@ RPC::RPC() : server_list(),
         switch (BASKET_CONF->RPC_IMPLEMENTATION) {
 #ifdef BASKET_ENABLE_RPCLIB
             case RPCLIB: {
-                for (std::vector<rpc::client>::size_type i = 0; i < server_list.size(); ++i) {
-                    rpclib_clients.push_back(std::make_unique<rpc::client>(server_list[i].c_str(), server_port + i));
-                }
+
                 break;
             }
 #endif
@@ -106,6 +104,9 @@ RPC::RPC() : server_list(),
             }
 #endif
         }
+    }
+    for (std::vector<rpc::client>::size_type i = 0; i < server_list.size(); ++i) {
+        rpclib_clients.push_back(std::make_unique<rpc::client>(server_list[i].c_str(), server_port + i));
     }
     run(BASKET_CONF->RPC_THREADS);
 }

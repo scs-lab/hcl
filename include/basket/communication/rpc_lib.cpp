@@ -53,6 +53,10 @@ Response RPC::callWithTimeout(uint16_t server_index, int timeout_ms, CharStruct 
 #ifdef BASKET_ENABLE_RPCLIB
         case RPCLIB: {
             auto *client = rpclib_clients[server_index].get();
+            if(client->get_connection_state() != rpc::client::connection_state::connected){
+                rpclib_clients[server_index]=std::make_unique<rpc::client>(server_list[server_index].c_str(), server_port + server_index);
+                client = rpclib_clients[server_index].get();
+            }
             client->set_timeout(timeout_ms);
             Response response = client->call(func_name.c_str(), std::forward<Args>(args)...);
             client->clear_timeout();
@@ -111,6 +115,10 @@ Response RPC::call(uint16_t server_index,
 #ifdef BASKET_ENABLE_RPCLIB
         case RPCLIB: {
             auto *client = rpclib_clients[server_index].get();
+            if(client->get_connection_state() != rpc::client::connection_state::connected){
+                rpclib_clients[server_index]=std::make_unique<rpc::client>(server_list[server_index].c_str(), server_port + server_index);
+                client = rpclib_clients[server_index].get();
+            }
             /*client.set_timeout(5000);*/
             return client->call(func_name.c_str(), std::forward<Args>(args)...);
             break;
@@ -226,6 +234,10 @@ std::future<Response> RPC::async_call(uint16_t server_index,
 #ifdef BASKET_ENABLE_RPCLIB
         case RPCLIB: {
             auto *client = rpclib_clients[server_index].get();
+            if(client->get_connection_state() != rpc::client::connection_state::connected){
+                rpclib_clients[server_index]=std::make_unique<rpc::client>(server_list[server_index].c_str(), server_port + server_index);
+                client = rpclib_clients[server_index].get();
+            }
             // client.set_timeout(5000);
             return client->async_call(func_name.c_str(), std::forward<Args>(args)...);
             break;
@@ -246,6 +258,36 @@ std::future<Response> RPC::async_call(uint16_t server_index,
     }
 }
 
+template <typename Response, typename... Args>
+std::future<Response> RPC::async_call(CharStruct &server,
+                                      uint16_t &port,
+                                      CharStruct const &func_name,
+                                      Args... args) {
+    AutoTrace trace = AutoTrace("RPC::async_call", server,port, func_name);
+
+    switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+        case RPCLIB: {
+            auto client = rpc::client(server.c_str(),port);
+            // client.set_timeout(5000);
+            return client.async_call(func_name.c_str(), std::forward<Args>(args)...);
+            break;
+        }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+        case THALLIUM_TCP: {
+            //TODO:NotImplemented error
+            break;
+        }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+        case THALLIUM_ROCE: {
+             //TODO:NotImplemented error
+            break;
+        }
+#endif
+    }
+}
 
 #ifdef BASKET_ENABLE_THALLIUM_ROCE
 // These are still experimental for using RDMA bulk transfers

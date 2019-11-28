@@ -155,6 +155,9 @@ private:
     template <typename Response, typename... Args>
     std::future<Response> async_call(
             uint16_t server_index, CharStruct const &func_name, Args... args);
+    template <typename Response, typename... Args>
+    std::future<Response> async_call(CharStruct &server,
+            uint16_t &port, CharStruct const &func_name, Args... args);
 
 };
 

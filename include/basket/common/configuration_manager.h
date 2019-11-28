@@ -82,9 +82,10 @@ namespace basket{
           file.open(SERVER_LIST_PATH.c_str(), ios::in);
           if (file.is_open()) {
               std::string file_line;
-              std::string server_node_name;
+
               int count;
               while (getline(file, file_line)) {
+                  CharStruct server_node_name;
                   if (!file_line.empty()) {
                       int split_loc = file_line.find(':');  // split to node and net
                       if (split_loc != std::string::npos) {
@@ -92,7 +93,7 @@ namespace basket{
                           count = atoi(file_line.substr(split_loc+1, std::string::npos).c_str());
                       } else {
                           // no special network
-                          server_node_name = file_line;
+                          server_node_name=file_line;
                           count = 1;
                       }
                       // server list is list of network interfaces
