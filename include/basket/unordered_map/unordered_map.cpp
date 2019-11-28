@@ -49,7 +49,7 @@ unordered_map<KeyType, MappedType, Hash>::unordered_map(CharStruct name_, uint16
        spawned on one node*/
     this->name = this->name + std::string("_") + std::to_string(my_server);
     /* if current rank is a server */
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(BASKET_CONF->RPC_PORT);
+    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     // rpc->copyArgs(&my_server, &num_servers, &server_on_node);
     if (is_server) {
         /* Delete existing instance of shared memory space*/
