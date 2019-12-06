@@ -32,10 +32,13 @@
 #include <vector>
 #include <basket/common/data_structures.h>
 #include "typedefs.h"
+#include <boost/thread/mutex.hpp>
 
 namespace basket{
 
     class ConfigurationManager {
+    private:
+        boost::mutex file_load;
     public:
         uint16_t RPC_PORT;
         uint16_t RPC_THREADS;
@@ -77,6 +80,7 @@ namespace basket{
       }
 
         std::vector<CharStruct> LoadServers(){
+          file_load.lock();
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
           file.open(SERVER_LIST_PATH.c_str(), ios::in);
@@ -108,6 +112,7 @@ namespace basket{
           }
           NUM_SERVERS = SERVER_LIST.size();
           file.close();
+          file_load.unlock();
           return SERVER_LIST;
       }
       void ConfigureDefaultClient(std::string server_list_path=""){
