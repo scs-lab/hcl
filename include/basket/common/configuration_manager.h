@@ -83,7 +83,10 @@ namespace basket{
           file_load.lock();
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
-          file.open(SERVER_LIST_PATH.c_str(), ios::in);
+          do {
+              usleep(10);
+              file.open(SERVER_LIST_PATH.c_str(), ios::in);
+          }while(file.is_open());
           if (file.is_open()) {
               std::string file_line;
 
