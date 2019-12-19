@@ -96,6 +96,13 @@ class set {
         if(server_on_node || is_server) return myset;
         else nullptr;
     }
+    void lock(){
+        mutex->lock();
+    }
+
+    void unlock(){
+        mutex->unlock();
+    }
     explicit set(CharStruct name_ = "TEST_SET", uint16_t port=BASKET_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key);

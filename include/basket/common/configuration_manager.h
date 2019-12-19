@@ -84,12 +84,11 @@ namespace basket{
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
           /*file.open(SERVER_LIST_PATH.c_str(), ios::in);*/
-          int retry=-1;
-          do {
-              retry++;
-              usleep(10);
-              file.open(SERVER_LIST_PATH.c_str(), ios::in);
-          }while(file.is_open() && retry < 5);
+          do{
+                usleep(100);
+
+                file.open(SERVER_LIST_PATH.c_str(), ios::in);
+          }while(!file.is_open());
           if (file.is_open()) {
               std::string file_line;
 
@@ -114,7 +113,6 @@ namespace basket{
               }
           } else {
               printf("Error: Can't open server list file %s\n", SERVER_LIST_PATH.c_str());
-              exit(EXIT_FAILURE);
           }
           NUM_SERVERS = SERVER_LIST.size();
           file.close();

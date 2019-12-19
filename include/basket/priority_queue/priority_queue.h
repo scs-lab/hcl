@@ -101,6 +101,13 @@ class priority_queue {
         if(server_on_node || is_server) return queue;
         else nullptr;
     }
+    void lock(){
+        mutex->lock();
+    }
+
+    void unlock(){
+        mutex->unlock();
+    }
     bool LocalPush(MappedType &data);
     std::pair<bool, MappedType> LocalPop();
     std::pair<bool, MappedType> LocalTop();

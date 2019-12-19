@@ -99,6 +99,13 @@ class map {
         if(server_on_node || is_server) return mymap;
         else nullptr;
     }
+    void lock(){
+        mutex->lock();
+    }
+
+    void unlock(){
+        mutex->unlock();
+    }
     bool LocalPut(KeyType &key, MappedType &data);
     std::pair<bool, MappedType> LocalGet(KeyType &key);
     std::pair<bool, MappedType> LocalErase(KeyType &key);

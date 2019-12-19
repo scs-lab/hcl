@@ -61,6 +61,13 @@ class global_clock {
         if(server_on_node || is_server) return start;
         else nullptr;
     }
+    void lock(){
+        mutex->lock();
+    }
+
+    void unlock(){
+        mutex->unlock();
+    }
     HTime GetTime();
 
     HTime GetTimeServer(uint16_t &server);

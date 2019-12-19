@@ -95,6 +95,13 @@ class multimap {
         if(server_on_node || is_server) return mymap;
         else nullptr;
     }
+    void lock(){
+        mutex->lock();
+    }
+
+    void unlock(){
+        mutex->unlock();
+    }
     explicit multimap(std::string name_ = "TEST_MULTIMAP", uint16_t port=BASKET_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key, MappedType &data);
