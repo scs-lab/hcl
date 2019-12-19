@@ -31,7 +31,7 @@ map<KeyType, MappedType, Compare>::~map() {
 }
 
 template<typename KeyType, typename MappedType, typename Compare>
-map<KeyType, MappedType, Compare>::map(std::string name_)
+map<KeyType, MappedType, Compare>::map(std::string name_, uint16_t port)
         : is_server(BASKET_CONF->IS_SERVER), my_server(BASKET_CONF->MY_SERVER),
           num_servers(BASKET_CONF->NUM_SERVERS),
           comm_size(1), my_rank(0), memory_allocated(BASKET_CONF->MEMORY_ALLOCATED),
@@ -47,7 +47,7 @@ map<KeyType, MappedType, Compare>::map(std::string name_)
        spawned on one node*/
     this->name += "_" + std::to_string(my_server);
     /* if current rank is a server */
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(BASKET_CONF->RPC_PORT);
+    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
         /* Delete existing instance of shared memory space*/
         boost::interprocess::file_mapping::remove(backed_file.c_str());

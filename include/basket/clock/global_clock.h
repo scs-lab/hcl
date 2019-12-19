@@ -58,8 +58,18 @@ class global_clock {
 
   public:
     ~global_clock();
-    global_clock(std::string name_ = "TEST_GLOBAL_CLOCK");
+    global_clock(std::string name_ = "TEST_GLOBAL_CLOCK", uint16_t port=BASKET_CONF->RPC_PORT);
+    chrono_time * data(){
+        if(server_on_node || is_server) return start;
+        else nullptr;
+    }
+    void lock(){
+        if(server_on_node || is_server) mutex->lock();
+    }
 
+    void unlock(){
+        if(server_on_node || is_server) mutex->unlock();
+    }
     HTime GetTime();
 
     HTime GetTimeServer(uint16_t &server);

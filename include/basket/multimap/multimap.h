@@ -93,8 +93,18 @@ class multimap {
   public:
     /* Constructor to deallocate the shared memory*/
     ~multimap();
+    MyMap * data(){
+        if(server_on_node || is_server) return mymap;
+        else nullptr;
+    }
+    void lock(){
+        if(server_on_node || is_server) mutex->lock();
+    }
 
-    explicit multimap(std::string name_ = "TEST_MULTIMAP");
+    void unlock(){
+        if(server_on_node || is_server) mutex->unlock();
+    }
+    explicit multimap(std::string name_ = "TEST_MULTIMAP", uint16_t port=BASKET_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key, MappedType &data);
     std::pair<bool, MappedType> LocalGet(KeyType &key);

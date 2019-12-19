@@ -20,12 +20,11 @@ add_custom_command(
 # Compile all examples
 foreach (example ${examples})
     add_executable (${example} ${example}.cpp util.h)
-    add_dependencies(${example} basket)
+    add_dependencies(${example} ${PROJECT_NAME})
     add_dependencies(${example} copy_hostfile)
     add_dependencies(${example} copy_server_list)
-    target_include_directories(${example} PRIVATE "${CMAKE_BINARY_DIR}/")
     set_target_properties(${example} PROPERTIES ENVIRONMENT LD_PRELOAD=${CMAKE_BINARY_DIR}/libbasket.so)
-    target_link_libraries(${example} ${LIB_FLAGS} -L${CMAKE_BINARY_DIR}/ -lbasket -lmpi)
+    target_link_libraries(${example} ${PROJECT_NAME})
     set_target_properties (${example} PROPERTIES FOLDER test)
 endforeach()
 
@@ -36,7 +35,6 @@ function(mpi target mpi_procs example ranks_per_process num_requests size_of_req
     set (test_parameters  -np ${mpi_procs} -f "${CMAKE_BINARY_DIR}/test/hostfile" "${CMAKE_BINARY_DIR}/test/${example}" ${ranks_per_process} ${num_requests} ${size_of_request} ${server_on_node} ${debug})
     add_test(NAME ${target}_${example}_MPI_${mpi_procs}_${ranks_per_process}_${num_requests}_${size_of_request}_${server_on_node}_${debug} COMMAND "mpirun" ${test_parameters})
     set_tests_properties(${target}_${example}_MPI_${mpi_procs}_${ranks_per_process}_${num_requests}_${size_of_request}_${server_on_node}_${debug} PROPERTIES ENVIRONMENT LD_PRELOAD=${CMAKE_BINARY_DIR}/libbasket.so)
-    set_tests_properties(${target}_${example}_MPI_${mpi_procs}_${ranks_per_process}_${num_requests}_${size_of_request}_${server_on_node}_${debug} PROPERTIES WILL_FAIL true)
 endfunction()
 
 # Define MPI test case

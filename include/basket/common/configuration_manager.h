@@ -34,10 +34,13 @@
 #include <vector>
 #include <basket/common/data_structures.h>
 #include "typedefs.h"
+#include <boost/thread/mutex.hpp>
 
 namespace basket{
 
     class ConfigurationManager {
+    private:
+        /*boost::mutex file_load;*/
     public:
         uint16_t RPC_PORT;
         uint16_t RPC_THREADS;
@@ -79,34 +82,43 @@ namespace basket{
       }
 
         std::vector<CharStruct> LoadServers(){
+          /*file_load.lock();*/
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
-          file.open(SERVER_LIST_PATH.c_str(), ios::in);
+          /*file.open(SERVER_LIST_PATH.c_str(), ios::in);*/
+          do{
+                usleep(100);
+
+                file.open(SERVER_LIST_PATH.c_str(), ios::in);
+          }while(!file.is_open());
           if (file.is_open()) {
               std::string file_line;
-              std::string server_node_name;
+
               int count;
               while (getline(file, file_line)) {
-                  int split_loc = file_line.find(':');  // split to node and net
-                  if (split_loc != std::string::npos) {
-                      server_node_name = file_line.substr(0, split_loc);
-                      count = atoi(file_line.substr(split_loc+1, std::string::npos).c_str());
-                  } else {
-                      // no special network
-                      server_node_name = file_line;
-                      count = 1;
-                  }
-                  // server list is list of network interfaces
-                  for(int i=0;i<count;++i){
-                      SERVER_LIST.emplace_back(server_node_name);
+                  CharStruct server_node_name;
+                  if (!file_line.empty()) {
+                      int split_loc = file_line.find(':');  // split to node and net
+                      if (split_loc != std::string::npos) {
+                          server_node_name = file_line.substr(0, split_loc);
+                          count = atoi(file_line.substr(split_loc+1, std::string::npos).c_str());
+                      } else {
+                          // no special network
+                          server_node_name=file_line;
+                          count = 1;
+                      }
+                      // server list is list of network interfaces
+                      for(int i=0;i<count;++i){
+                          SERVER_LIST.emplace_back(server_node_name);
+                      }
                   }
               }
           } else {
               printf("Error: Can't open server list file %s\n", SERVER_LIST_PATH.c_str());
-              exit(EXIT_FAILURE);
           }
           NUM_SERVERS = SERVER_LIST.size();
           file.close();
+          /*file_load.unlock();*/
           return SERVER_LIST;
       }
       void ConfigureDefaultClient(std::string server_list_path=""){

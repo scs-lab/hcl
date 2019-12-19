@@ -139,7 +139,7 @@ int main (int argc,char* argv[])
     BASKET_CONF->MY_SERVER = my_server;
     BASKET_CONF->NUM_SERVERS = num_servers;
     BASKET_CONF->SERVER_ON_NODE = server_on_node || is_server;
-    BASKET_CONF->SERVER_LIST_PATH = "./test/server_list";
+    BASKET_CONF->SERVER_LIST_PATH = "./server_list";
 
     basket::unordered_map<KeyType,std::array<int, array_size>> *map;
     if (is_server) {
@@ -156,13 +156,7 @@ int main (int argc,char* argv[])
     MPI_Comm_split(MPI_COMM_WORLD, !is_server, my_rank, &client_comm);
     int client_comm_size;
     MPI_Comm_size(client_comm, &client_comm_size);
-   /* if(is_server){
-        std::function<int(int)> func=[](int x){ std::cout<<x<<std::endl;return x; };
-        int a;
-        std::function<std::pair<bool,int>(KeyType&,std::array<int, array_size>&,std::string,int)> putFunc(std::bind(&basket::unordered_map<KeyType,std::array<int,
-                                                                                                                    array_size>>::LocalPutWithCallback<int,int>,map,std::placeholders::_1, std::placeholders::_2,std::placeholders::_3, std::placeholders::_4));
-        map->Bind("CB_Put", func, "APut",putFunc);
-    }*/
+
     MPI_Barrier(MPI_COMM_WORLD);
     if (!is_server) {
         Timer llocal_map_timer=Timer();

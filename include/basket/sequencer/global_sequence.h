@@ -56,8 +56,18 @@ class global_sequence {
 
   public:
     ~global_sequence();
-    global_sequence(std::string name_ = "TEST_GLOBAL_SEQUENCE");
+    global_sequence(std::string name_ = "TEST_GLOBAL_SEQUENCE", uint16_t port=BASKET_CONF->RPC_PORT);
+    uint64_t * data(){
+        if(server_on_node || is_server) return value;
+        else nullptr;
+    }
+    void lock(){
+        if(server_on_node || is_server) mutex->lock();
+    }
 
+    void unlock(){
+        if(server_on_node || is_server) mutex->unlock();
+    }
     uint64_t GetNextSequence();
     uint64_t GetNextSequenceServer(uint16_t &server);
 

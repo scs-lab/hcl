@@ -21,6 +21,7 @@
  */
 
 #include <basket/clock/global_clock.h>
+#include <basket/communication/rpc_factory.h>
 
 namespace basket {
 /*
@@ -32,7 +33,7 @@ global_clock::~global_clock() {
 }
 
 
-global_clock::global_clock(std::string name_)
+global_clock::global_clock(std::string name_, uint16_t port)
         : is_server(BASKET_CONF->IS_SERVER), my_server(BASKET_CONF->MY_SERVER),
           num_servers(BASKET_CONF->NUM_SERVERS),
           comm_size(1), my_rank(0), memory_allocated(1024ULL * 1024ULL * 128ULL),
@@ -44,7 +45,7 @@ global_clock::global_clock(std::string name_)
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     name = name+"_"+std::to_string(my_server);
-    rpc = Singleton<RPC>::GetInstance();
+    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
                 switch (BASKET_CONF->RPC_IMPLEMENTATION) {
 #ifdef BASKET_ENABLE_RPCLIB

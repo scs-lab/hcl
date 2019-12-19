@@ -27,7 +27,7 @@ make install
 ```
 
 A flag should be added to cmake to indicate preferred RPC library,
-otherwise behavior is undefined. If compiling with RPCLib, use
+otherwise compilation will fail. If compiling with RPCLib, use
 -DBASKET_ENABLE_RPCLIB. If compiling with Thallium, use either
 -DBASKET_ENABLE_THALLIUM_TCP or -DBASKET_ENABLE_THALLIUM_ROCE
 

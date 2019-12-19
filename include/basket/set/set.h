@@ -69,11 +69,11 @@ namespace basket {
  * @tparam MappedType, the value of the Set
  */
 
-template<typename KeyType, typename Compare =
+template<typename KeyType, typename Hash = std::hash<KeyType>, typename Compare =
          std::less<KeyType>>
 class set {
   private:
-    std::hash<KeyType> keyHash;
+    Hash keyHash;
     /** Class Typedefs for ease of use **/
     typedef boost::interprocess::allocator<KeyType, boost::interprocess::managed_mapped_file::segment_manager>
     ShmemAllocator;
@@ -94,8 +94,18 @@ class set {
 
   public:
     ~set();
+    MySet * data(){
+        if(server_on_node || is_server) return myset;
+        else nullptr;
+    }
+    void lock(){
+        if(server_on_node || is_server) mutex->lock();
+    }
 
-    explicit set(CharStruct name_ = std::string("TEST_SET"));
+    void unlock(){
+        if(server_on_node || is_server) mutex->unlock();
+    }
+    explicit set(CharStruct name_ = "TEST_SET", uint16_t port=BASKET_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key);
     bool LocalGet(KeyType &key);

@@ -45,6 +45,8 @@
 #include <vector>
 #include <cstdint>
 #include <chrono>
+#include <boost/concept_check.hpp>
+#include "typedefs.h"
 
 namespace bip = boost::interprocess;
 
@@ -123,6 +125,12 @@ typedef struct CharStruct {
     }
 
 } CharStruct;
+
+static CharStruct operator+(const std::string& a1, const CharStruct& a2) {
+    std::string added=a1+std::string(a2.c_str());
+    return CharStruct(added);
+}
+
 namespace std {
 template<>
 struct hash<CharStruct> {
@@ -200,4 +208,27 @@ std::ostream &operator<<(std::ostream &os, std::vector<T> const &ms){
     os << "]";
     return os;
 }
+
+template<typename T>
+class CalculateSize{
+public:
+    really_long GetSize(T value){
+        return sizeof(value);
+    }
+};
+template <>
+class CalculateSize<std::string>{
+public:
+    really_long GetSize(std::string value){
+        return strlen(value.c_str())+1;
+    }
+};
+template <>
+class CalculateSize<bip::string>{
+public:
+    really_long GetSize(bip::string value){
+        return strlen(value.c_str())+1;
+    }
+};
+
 #endif  // INCLUDE_BASKET_COMMON_DATA_STRUCTURES_H_
