@@ -98,11 +98,11 @@ class queue {
         else nullptr;
     }
     void lock(){
-        mutex->lock();
+        if(server_on_node || is_server) mutex->lock();
     }
 
     void unlock(){
-        mutex->unlock();
+        if(server_on_node || is_server) mutex->unlock();
     }
     bool LocalPush(MappedType &data);
     std::pair<bool, MappedType> LocalPop();

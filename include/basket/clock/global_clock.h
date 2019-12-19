@@ -62,11 +62,11 @@ class global_clock {
         else nullptr;
     }
     void lock(){
-        mutex->lock();
+        if(server_on_node || is_server) mutex->lock();
     }
 
     void unlock(){
-        mutex->unlock();
+        if(server_on_node || is_server) mutex->unlock();
     }
     HTime GetTime();
 

@@ -107,11 +107,11 @@ class unordered_map {
         else nullptr;
     }
     void lock(){
-        mutex->lock();
+        if(server_on_node || is_server) mutex->lock();
     }
 
     void unlock(){
-        mutex->unlock();
+        if(server_on_node || is_server) mutex->unlock();
     }
    /* template <typename F>
     void Bind(std::string rpc_name, F fun);*/

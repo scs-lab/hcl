@@ -60,11 +60,11 @@ class global_sequence {
         else nullptr;
     }
     void lock(){
-        mutex->lock();
+        if(server_on_node || is_server) mutex->lock();
     }
 
     void unlock(){
-        mutex->unlock();
+        if(server_on_node || is_server) mutex->unlock();
     }
     uint64_t GetNextSequence();
     uint64_t GetNextSequenceServer(uint16_t &server);
