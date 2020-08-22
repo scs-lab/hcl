@@ -178,55 +178,6 @@ void unordered_map<KeyType, MappedType, Hash>::Bind(  CharStruct callback_name,
     rpc->bind(caller_func_name, caller_func);
 }
 
-template<typename KeyType, typename MappedType,typename Hash>
-template<typename ReturnType,typename... CB_Tuple_Args>
-typename std::enable_if_t<std::is_void<ReturnType>::value,bool>
-unordered_map<KeyType, MappedType, Hash>::LocalPutWithCallback(KeyType &key, MappedType &data, CharStruct cb_name, CB_Tuple_Args... cb_args){
-    auto ret_1=LocalPut(key,data);
-    auto ret_2=Call<ReturnType>(cb_name,std::forward<CB_Tuple_Args>(cb_args)...);
-    return ret_1;
-}
-
-template<typename KeyType, typename MappedType,typename Hash>
-template<typename ReturnType,typename... CB_Tuple_Args>
-typename std::enable_if_t<!std::is_void<ReturnType>::value,std::pair<bool,ReturnType>> unordered_map<KeyType, MappedType, Hash>::LocalPutWithCallback(KeyType &key, MappedType &data,
-                                                                                                                                                CharStruct cb_name,
-                                                              CB_Tuple_Args... cb_args) {
-    auto ret_1=LocalPut(key,data);
-    auto ret_2=Call<ReturnType>(cb_name,std::forward<CB_Tuple_Args>(cb_args)...);
-    return std::pair<bool,ReturnType>(ret_1,ret_2);
-}
-
-template<typename KeyType, typename MappedType,typename Hash>
-template<typename ReturnType,typename... CB_Args>
-typename std::enable_if_t<!std::is_void<ReturnType>::value,std::pair<bool,ReturnType>> unordered_map<KeyType, MappedType, Hash>::PutWithCallback(KeyType &key, MappedType &data,
-                                                                                                                                           CharStruct c_name,
-                                                                                                                                           CharStruct cb_name,
-                                                         CB_Args... cb_args) {
-    uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
-    if (key_int == my_server && server_on_node) {
-        return LocalPutWithCallback<ReturnType>(key, data, cb_name, std::forward<CB_Args>(cb_args)...);
-    } else {
-        typedef std::pair<bool,ReturnType> ret;
-        return RPC_CALL_WRAPPER_CB(c_name, key_int, ret, key, data, cb_name);
-    }
-}
-
-template<typename KeyType, typename MappedType,typename Hash>
-template<typename ReturnType,typename... CB_Args>
-typename std::enable_if_t<std::is_void<ReturnType>::value,bool> unordered_map<KeyType, MappedType, Hash>::PutWithCallback(KeyType &key, MappedType &data,
-                                                                                                                    CharStruct c_name,
-                                                                                                                    CharStruct cb_name,
-                                                                                                                    CB_Args... cb_args) {
-    uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
-    if (key_int == my_server && server_on_node) {
-        return LocalPutWithCallback<ReturnType>(key, data, cb_name, std::forward<CB_Args>(cb_args)...);
-    } else {
-
-        return RPC_CALL_WRAPPER_CB(c_name, key_int, bool, key, data, cb_name);
-    }
-}
-
 /**
  * Get the data in the local unordered map.
  * @param key, key to get
