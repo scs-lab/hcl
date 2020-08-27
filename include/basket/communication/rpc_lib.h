@@ -81,10 +81,6 @@
 #include <iostream>
 #include <future>
 
-#if !defined(BASKET_ENABLE_RPCLIB) && !defined(BASKET_ENABLE_THALLIUM_TCP) && !defined(BASKET_ENABLE_THALLIUM_ROCE)
-#error "Please define an RPC backend (e.g., -DBASKET_ENABLE_RPCLIB)"
-#endif
-
 namespace bip = boost::interprocess;
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
 namespace tl = thallium;
