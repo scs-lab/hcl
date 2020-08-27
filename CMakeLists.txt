@@ -102,7 +102,7 @@ else()
 endif()
 
 
-option(BUILD_TEST "Build the unit tests" ON)
+option(BUILD_TEST "Build the unit tests" OFF)
 if(BUILD_TEST)
     enable_testing()
     add_subdirectory(test)
