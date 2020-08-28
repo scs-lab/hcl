@@ -1,8 +1,10 @@
 /*
- * Copyright (C) 2019  Hariharan Devarajan, Keith Bateman
+ * Copyright (C) 2019  SCS Lab <scs-help@cs.iit.edu>, Hariharan
+ * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
+ * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
  * This file is part of Basket
- *
+ * 
  * Basket is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the

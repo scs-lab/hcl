@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2019  Hariharan Devarajan, Keith Bateman
+ * Copyright (C) 2019  SCS Lab <scs-help@cs.iit.edu>, Hariharan
+ * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
+ * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
  * This file is part of Basket
  * 
@@ -78,10 +80,6 @@
 #include <fstream>
 #include <iostream>
 #include <future>
-
-#if !defined(BASKET_ENABLE_RPCLIB) && !defined(BASKET_ENABLE_THALLIUM_TCP) && !defined(BASKET_ENABLE_THALLIUM_ROCE)
-#error "Please define an RPC backend (e.g., -DBASKET_ENABLE_RPCLIB)"
-#endif
 
 namespace bip = boost::interprocess;
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
