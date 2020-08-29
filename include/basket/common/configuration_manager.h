@@ -40,7 +40,7 @@ namespace basket{
 
     class ConfigurationManager {
     private:
-        /*boost::mutex file_load;*/
+        boost::mutex file_load;
     public:
         uint16_t RPC_PORT;
         uint16_t RPC_THREADS;
@@ -82,15 +82,10 @@ namespace basket{
       }
 
         std::vector<CharStruct> LoadServers(){
-          /*file_load.lock();*/
+          file_load.lock();
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
-          /*file.open(SERVER_LIST_PATH.c_str(), ios::in);*/
-          do{
-                usleep(100);
-
-                file.open(SERVER_LIST_PATH.c_str(), ios::in);
-          }while(!file.is_open());
+          file.open(SERVER_LIST_PATH.c_str(), ios::in);
           if (file.is_open()) {
               std::string file_line;
 
@@ -118,7 +113,7 @@ namespace basket{
           }
           NUM_SERVERS = SERVER_LIST.size();
           file.close();
-          /*file_load.unlock();*/
+          file_load.unlock();
           return SERVER_LIST;
       }
       void ConfigureDefaultClient(std::string server_list_path=""){
