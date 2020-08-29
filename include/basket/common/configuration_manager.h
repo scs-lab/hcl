@@ -82,6 +82,7 @@ namespace basket{
       }
 
         std::vector<CharStruct> LoadServers(){
+          if(SERVER_LIST.size() > 0) return SERVER_LIST;
           file_load.lock();
           SERVER_LIST=std::vector<CharStruct>();
           fstream file;
