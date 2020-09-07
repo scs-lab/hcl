@@ -61,7 +61,7 @@ RPC::RPC() : server_list(),
 #ifdef BASKET_ENABLE_RPCLIB
         case RPCLIB: {
             rpclib_server = std::make_shared<rpc::server>(server_port+BASKET_CONF->MY_SERVER);
-            rpclib_server->suppress_exceptions(true);
+            rpclib_server->suppress_exceptions(false);
 	break;
       }
 #endif
