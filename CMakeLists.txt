@@ -93,15 +93,6 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-if (DEFINED ENV{PKG_CONFIG_PATH})
-   install(FILES ${CMAKE_BINARY_DIR}/basket.pc
-                  DESTINATION $ENV{PKG_CONFIG_PATH}/pkgconfig)
-else()
-   install(FILES ${CMAKE_BINARY_DIR}/basket.pc
-                  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
-endif()
-
-
 option(BUILD_TEST "Build the unit tests" OFF)
 if(BUILD_TEST)
     enable_testing()
