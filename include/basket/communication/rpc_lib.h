@@ -94,7 +94,7 @@ private:
     std::shared_ptr<rpc::server> rpclib_server;
     // We can't use a std::vector<rpc::client> for these since rpc::client is neither copy
     // nor move constructible. See https://github.com/rpclib/rpclib/issues/128
-    std::vector<std::unique_ptr<rpc::client>> rpclib_clients;
+    std::vector<std::shared_ptr<rpc::client>> rpclib_clients;
 #endif
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
     std::shared_ptr<tl::engine> thallium_engine;

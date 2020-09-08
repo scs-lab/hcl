@@ -40,7 +40,7 @@ public:
         if(iter!=rpcs.end()) return iter->second;
         auto temp = BASKET_CONF->RPC_PORT;
         BASKET_CONF->RPC_PORT=server_port;
-        auto rpc = std::make_shared<RPC>();
+        auto rpc = std::shared_ptr<RPC>();
         rpcs.emplace(server_port,rpc);
         BASKET_CONF->RPC_PORT=temp;
         return rpc;
