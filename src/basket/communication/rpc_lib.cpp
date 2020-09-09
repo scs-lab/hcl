@@ -54,14 +54,12 @@ RPC::RPC() : server_list(),
     AutoTrace trace = AutoTrace("RPC");
 
     server_list = BASKET_CONF->LoadServers();
-    printf("I m within server1\n");
 
     /* if current rank is a server */
     if (BASKET_CONF->IS_SERVER) {
         switch (BASKET_CONF->RPC_IMPLEMENTATION) {
 #ifdef BASKET_ENABLE_RPCLIB
         case RPCLIB: {
-            printf("I m within server\n");
             rpclib_server = std::make_shared<rpc::server>(server_port+BASKET_CONF->MY_SERVER);
             rpclib_server->suppress_exceptions(false);
 	break;
