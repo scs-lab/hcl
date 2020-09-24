@@ -226,8 +226,8 @@ unordered_map<KeyType, MappedType, Hash>::LocalErase(KeyType &key) {
     typename MyHashMap::iterator iterator = myHashMap->find(key);
     if (iterator != myHashMap->end()) {
         size_occupied -= CalculateSize<KeyType>().GetSize(key) + CalculateSize<MappedType>().GetSize(iterator->second);
-        auto iter = myHashMap->erase(iterator);
-        return std::pair<bool, MappedType>(true, iterator->second);
+        myHashMap->erase(iterator);
+        return std::pair<bool, MappedType>(true, MappedType());
     }else return std::pair<bool, MappedType>(false, MappedType());
 }
 
