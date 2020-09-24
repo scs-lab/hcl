@@ -157,7 +157,7 @@ class unordered_map {
     THALLIUM_DEFINE1(LocalGetAllDataInServer)
 #endif
 
-    bool Put(KeyType &key, MappedType &data);
+    bool Put(KeyType key, MappedType data);
     std::pair<bool, MappedType> Get(KeyType &key);
     std::pair<bool, MappedType> Erase(KeyType &key);
     std::vector<std::pair<KeyType, MappedType>> GetAllData();
