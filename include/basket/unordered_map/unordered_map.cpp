@@ -157,8 +157,8 @@ bool unordered_map<KeyType, MappedType, Hash>::LocalPut(KeyType &key,
  * @return bool, true if Put was successful else false.
  */
 template<typename KeyType, typename MappedType,typename Hash>
-bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType &key,
-                                             MappedType &data) {
+bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType key,
+                                             MappedType data) {
     uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
     if (key_int == my_server && server_on_node) {
         return LocalPut(key, data);
