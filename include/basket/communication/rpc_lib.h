@@ -114,7 +114,70 @@ private:
   public:
     ~RPC();
 
-    RPC();
+    RPC() : server_list(),
+             server_port(BASKET_CONF->RPC_PORT) {
+    AutoTrace trace = AutoTrace("RPC");
+
+    server_list = BASKET_CONF->LoadServers();
+
+    /* if current rank is a server */
+    if (BASKET_CONF->IS_SERVER) {
+        switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+        case RPCLIB: {
+            rpclib_server = std::make_shared<rpc::server>(server_port+BASKET_CONF->MY_SERVER);
+            rpclib_server->suppress_exceptions(false);
+	break;
+      }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+        case THALLIUM_TCP: {
+	engine_init_str = BASKET_CONF->TCP_CONF + "://" +
+	  BASKET_CONF->SERVER_LIST[BASKET_CONF->MY_SERVER] +
+	  ":" +
+	  std::to_string(server_port + BASKET_CONF->MY_SERVER);
+	break;
+      }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+      case THALLIUM_ROCE: {
+	  engine_init_str = BASKET_CONF->VERBS_CONF + "://" +
+	    BASKET_CONF->VERBS_DOMAIN + "://" +
+	    BASKET_CONF->SERVER_LIST[BASKET_CONF->MY_SERVER] +
+	    ":" +
+	    std::to_string(server_port+BASKET_CONF->MY_SERVER);
+	  break;
+	}
+#endif
+        }
+    } else {
+        switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+            case RPCLIB: {
+
+                break;
+            }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+            case THALLIUM_TCP: {
+                init_engine_and_endpoints(BASKET_CONF->TCP_CONF);
+                break;
+            }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+            case THALLIUM_ROCE: {
+                init_engine_and_endpoints(BASKET_CONF->VERBS_CONF);
+                break;
+            }
+#endif
+        }
+    }
+    for (std::vector<rpc::client>::size_type i = 0; i < server_list.size(); ++i) {
+        rpclib_clients.push_back(std::make_unique<rpc::client>(server_list[i].c_str(), server_port + i));
+    }
+    run(BASKET_CONF->RPC_THREADS);
+}
+
 
     template <typename F>
     void bind(CharStruct str, F func);
