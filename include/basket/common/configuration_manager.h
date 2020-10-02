@@ -93,15 +93,18 @@ namespace basket{
               while (getline(file, file_line)) {
                   CharStruct server_node_name;
                   if (!file_line.empty()) {
-                      int split_loc = file_line.find(':');  // split to node and net
-                      if (split_loc != std::string::npos) {
-                          server_node_name = file_line.substr(0, split_loc);
-                          count = atoi(file_line.substr(split_loc+1, std::string::npos).c_str());
-                      } else {
-                          // no special network
-                          server_node_name=file_line;
-                          count = 1;
-                      }
+                        int split_loc = file_line.find(":");
+                        int split_loc2 = file_line.find(':'); // split to node and net
+                        //int split_loc = file_line.find(" slots=");
+                        //int split_loc2 = file_line.find('='); // split to node and net
+                        if (split_loc != std::string::npos) {
+                            server_node_name = file_line.substr(0, split_loc);
+                            count = atoi(file_line.substr(split_loc2+1, std::string::npos).c_str());
+                        } else {
+                            // no special network
+                            server_node_name = file_line;
+                            count = 1;
+                        }
                       // server list is list of network interfaces
                       for(int i=0;i<count;++i){
                           SERVER_LIST.emplace_back(server_node_name);

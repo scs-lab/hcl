@@ -157,8 +157,8 @@ bool unordered_map<KeyType, MappedType, Hash>::LocalPut(KeyType &key,
  * @return bool, true if Put was successful else false.
  */
 template<typename KeyType, typename MappedType,typename Hash>
-bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType &key,
-                                             MappedType &data) {
+bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType key,
+                                             MappedType data) {
     uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
     if (key_int == my_server && server_on_node) {
         return LocalPut(key, data);
@@ -226,8 +226,8 @@ unordered_map<KeyType, MappedType, Hash>::LocalErase(KeyType &key) {
     typename MyHashMap::iterator iterator = myHashMap->find(key);
     if (iterator != myHashMap->end()) {
         size_occupied -= CalculateSize<KeyType>().GetSize(key) + CalculateSize<MappedType>().GetSize(iterator->second);
-        auto iter = myHashMap->erase(iterator);
-        return std::pair<bool, MappedType>(true, iterator->second);
+        myHashMap->erase(iterator);
+        return std::pair<bool, MappedType>(true, MappedType());
     }else return std::pair<bool, MappedType>(false, MappedType());
 }
 
