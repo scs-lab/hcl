@@ -62,6 +62,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <hcl/common/container.h>
 
 /** Namespaces Uses **/
 
@@ -75,9 +76,8 @@ namespace hcl {
  * @tparam MappedType, the value of the HashMap
  */
 template<typename KeyType, typename MappedType,typename Hash = std::hash<KeyType>>
-class unordered_map {
+class unordered_map:public container {
   private:
-    Hash keyHash;
     /** Class Typedefs for ease of use **/
     typedef std::pair<const KeyType, MappedType> ValueType;
     typedef boost::interprocess::allocator<ValueType, boost::interprocess::managed_mapped_file::segment_manager> ShmemAllocator;
@@ -87,18 +87,8 @@ class unordered_map {
                                                                 ShmemAllocator>
                                                                 MyHashMap;
     /** Class attributes**/
-    int comm_size, my_rank, num_servers;
-    uint16_t  my_server;
-    std::shared_ptr<RPC> rpc;
-    really_long memory_allocated;
-    bool is_server;
-    boost::interprocess::managed_mapped_file segment;
-    CharStruct name, func_prefix;
+    Hash keyHash;
     MyHashMap *myHashMap;
-    boost::interprocess::interprocess_mutex* mutex;
-    bool server_on_node;
-    std::unordered_map<CharStruct, void*> binding_map;
-    CharStruct backed_file;
   public:
     really_long size_occupied;
     ~unordered_map();
@@ -108,27 +98,19 @@ class unordered_map {
         if(server_on_node || is_server) return myHashMap;
         else nullptr;
     }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
+
+    void construct_shared_memory() override{
+        /* Construct unordered_map in the shared memory space. */
+        myHashMap = segment.construct<MyHashMap>(name.c_str())(
+                128, Hash(), std::equal_to<KeyType>(),
+                segment.get_allocator<ValueType>());
+
     }
 
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
-    }
-   /* template <typename F>
-    void Bind(std::string rpc_name, F fun);*/
+    void open_shared_memory() override;
 
-   template<typename CF, typename ReturnType,typename... ArgsType>
-   void Bind(CharStruct rpc_name, std::function<ReturnType(ArgsType...)> callback_func, CharStruct caller_func_name, CF caller_func);
+    void bind_functions() override;
 
-   template<typename ReturnType,typename... CB_Tuple_Args>
-   ReturnType Call(CharStruct cb_name, CB_Tuple_Args... cb_args){
-       auto iter =  binding_map.find(cb_name);
-       if(iter!=binding_map.end()){
-           std::function<ReturnType(CB_Tuple_Args...)> *cb_func=(std::function<ReturnType(CB_Tuple_Args...)> *)iter->second;
-           (*cb_func)(std::forward<CB_Tuple_Args>(cb_args)...);
-       }
-   }
     bool LocalPut(KeyType &key, MappedType &data);
     std::pair<bool, MappedType> LocalGet(KeyType &key);
     std::pair<bool, MappedType> LocalErase(KeyType &key);

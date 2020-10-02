@@ -36,47 +36,36 @@
 #include <memory>
 #include <string>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <hcl/common/container.h>
 
 namespace bip = boost::interprocess;
 
 namespace hcl {
-class global_sequence {
+class global_sequence :public container{
   private:
     uint64_t* value;
-    bool is_server;
-    bip::interprocess_mutex* mutex;
-    int my_rank, comm_size, num_servers;
-    uint16_t my_server;
-    really_long memory_allocated;
-    bip::managed_mapped_file segment;
-    std::string name, func_prefix;
-    std::shared_ptr<RPC> rpc;
-    bool server_on_node;
-    CharStruct backed_file;
 
   public:
     ~global_sequence() {
-        if (is_server) bip::file_mapping::remove(backed_file.c_str());
+        this->container::~container();
     }
-    global_sequence(std::string name_ = "TEST_GLOBAL_SEQUENCE", uint16_t port=HCL_CONF->RPC_PORT)
-            : is_server(HCL_CONF->IS_SERVER), my_server(HCL_CONF->MY_SERVER),
-              num_servers(HCL_CONF->NUM_SERVERS),
-              comm_size(1), my_rank(0), memory_allocated(HCL_CONF->MEMORY_ALLOCATED),
-              backed_file(HCL_CONF->BACKED_FILE_DIR + PATH_SEPARATOR + name_),
-              name(name_), segment(),
-              func_prefix(name_),
-              server_on_node(HCL_CONF->SERVER_ON_NODE) {
-        AutoTrace trace = AutoTrace("hcl::global_sequence");
-        MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-        MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-        name = name+"_"+std::to_string(my_server);
-        rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
-        if (is_server) {
-            switch (HCL_CONF->RPC_IMPLEMENTATION) {
+
+    void construct_shared_memory() override {
+        value = segment.construct<uint64_t>(name.c_str())(0);
+    }
+
+    void open_shared_memory() override {
+        std::pair<uint64_t*, bip::managed_mapped_file::size_type> res;
+        res = segment.find<uint64_t> (name.c_str());
+        value = res.first;
+    }
+
+    void bind_functions() override {
+        switch (HCL_CONF->RPC_IMPLEMENTATION) {
 #ifdef HCL_ENABLE_RPCLIB
-                case RPCLIB: {
+            case RPCLIB: {
                 std::function<uint64_t(void)> getNextSequence(std::bind(
-                    &hcl::global_sequence::LocalGetNextSequence, this));
+                &hcl::global_sequence::LocalGetNextSequence, this));
                 rpc->bind(func_prefix+"_GetNextSequence", getNextSequence);
                 break;
             }
@@ -85,7 +74,7 @@ class global_sequence {
                 case THALLIUM_TCP:
 #endif
 #ifdef HCL_ENABLE_THALLIUM_ROCE
-                    case THALLIUM_ROCE:
+                case THALLIUM_ROCE:
 #endif
 #if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
                 {
@@ -96,34 +85,22 @@ class global_sequence {
                     break;
                 }
 #endif
-            }
+        }
+    }
 
-            boost::interprocess::file_mapping::remove(backed_file.c_str());
-            segment = bip::managed_mapped_file(bip::create_only, backed_file.c_str(), 65536);
-            value = segment.construct<uint64_t>(name.c_str())(0);
-            mutex = segment.construct<boost::interprocess::interprocess_mutex>(
-                    "mtx")();
+    global_sequence(CharStruct name_ = "TEST_GLOBAL_SEQUENCE", uint16_t port=HCL_CONF->RPC_PORT)
+            : container(name_,port) {
+        AutoTrace trace = AutoTrace("hcl::global_sequence");
+        if (is_server) {
+            construct_shared_memory();
+            bind_functions();
         }else if (!is_server && server_on_node) {
-            segment = bip::managed_mapped_file(bip::open_only, backed_file.c_str());
-            std::pair<uint64_t*, bip::managed_mapped_file::size_type> res;
-            res = segment.find<uint64_t> (name.c_str());
-            value = res.first;
-            std::pair<bip::interprocess_mutex *,
-                    bip::managed_mapped_file::size_type> res2;
-            res2 = segment.find<bip::interprocess_mutex>("mtx");
-            mutex = res2.first;
+            open_shared_memory();
         }
     }
     uint64_t * data(){
         if(server_on_node || is_server) return value;
         else nullptr;
-    }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
-    }
-
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
     }
     uint64_t GetNextSequence(){
         if (server_on_node) {

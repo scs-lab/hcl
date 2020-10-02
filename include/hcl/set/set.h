@@ -60,6 +60,7 @@
 #include <set>
 #include <vector>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <hcl/common/container.h>
 
 namespace hcl {
 /**
@@ -71,39 +72,29 @@ namespace hcl {
 
 template<typename KeyType, typename Hash = std::hash<KeyType>, typename Compare =
          std::less<KeyType>>
-class set {
+class set :public container {
   private:
-    Hash keyHash;
     /** Class Typedefs for ease of use **/
     typedef boost::interprocess::allocator<KeyType, boost::interprocess::managed_mapped_file::segment_manager>
     ShmemAllocator;
     typedef boost::interprocess::set<KeyType, Compare, ShmemAllocator>
     MySet;
     /** Class attributes**/
-    int comm_size, my_rank, num_servers;
-    uint16_t  my_server;
-    std::shared_ptr<RPC> rpc;
-    really_long memory_allocated;
-    bool is_server;
-    boost::interprocess::managed_mapped_file segment;
-    CharStruct name, func_prefix;
+    Hash keyHash;
     MySet *myset;
-    boost::interprocess::interprocess_mutex* mutex;
-    bool server_on_node;
-    CharStruct backed_file;
 
   public:
     ~set();
+
+    void construct_shared_memory() override;
+
+    void open_shared_memory() override;
+
+    void bind_functions() override;
+
     MySet * data(){
         if(server_on_node || is_server) return myset;
         else nullptr;
-    }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
-    }
-
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
     }
     explicit set(CharStruct name_ = "TEST_SET", uint16_t port=HCL_CONF->RPC_PORT);
 

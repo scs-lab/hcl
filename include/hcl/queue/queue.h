@@ -57,6 +57,7 @@
 #include <memory>
 #include <string>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <hcl/common/container.h>
 
 /** Namespaces Uses **/
 namespace bip = boost::interprocess;
@@ -70,41 +71,27 @@ namespace hcl {
  * @tparam MappedType, the value of the Queue
  */
 template<typename MappedType>
-class queue {
+class queue :public container{
   private:
     /** Class Typedefs for ease of use **/
-    typedef bip::allocator<MappedType,
-                           bip::managed_mapped_file::segment_manager>
-    ShmemAllocator;
+    typedef bip::allocator<MappedType, bip::managed_mapped_file::segment_manager> ShmemAllocator;
     typedef boost::interprocess::deque<MappedType, ShmemAllocator> Queue;
 
     /** Class attributes**/
-    int comm_size, my_rank, num_servers;
-    uint16_t  my_server;
-    really_long memory_allocated;
-    bool is_server;
-    boost::interprocess::managed_mapped_file segment;
-    std::string name, func_prefix;
     Queue *my_queue;
-    boost::interprocess::interprocess_mutex* mutex;
-    bool server_on_node;
-    CharStruct backed_file;
-
   public:
-    std::shared_ptr<RPC> rpc;
     ~queue();
 
-    explicit queue(std::string name_ = "TEST_QUEUE", uint16_t port=HCL_CONF->RPC_PORT);
+    void construct_shared_memory() override;
+
+    void open_shared_memory() override;
+
+    void bind_functions() override;
+
+    explicit queue(CharStruct name_ = "TEST_QUEUE", uint16_t port=HCL_CONF->RPC_PORT);
     Queue * data(){
         if(server_on_node || is_server) return my_queue;
         else nullptr;
-    }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
-    }
-
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
     }
     bool LocalPush(MappedType &data);
     std::pair<bool, MappedType> LocalPop();

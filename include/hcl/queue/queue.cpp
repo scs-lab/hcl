@@ -22,90 +22,16 @@
 
 template<typename MappedType>
 queue<MappedType>::~queue() {
-    if (is_server) bip::file_mapping::remove(backed_file.c_str());
+    this->container::~container();
 }
 template<typename MappedType>
-queue<MappedType>::queue(std::string name_, uint16_t port)
-        : is_server(HCL_CONF->IS_SERVER), my_server(HCL_CONF->MY_SERVER),
-          num_servers(HCL_CONF->NUM_SERVERS),
-          comm_size(1), my_rank(0), memory_allocated(HCL_CONF->MEMORY_ALLOCATED),
-          backed_file(HCL_CONF->BACKED_FILE_DIR + PATH_SEPARATOR + name_+"_"+std::to_string(my_server)),
-          name(name_), segment(), my_queue(), func_prefix(name_),
-          server_on_node(HCL_CONF->SERVER_ON_NODE) {
+queue<MappedType>::queue(CharStruct name_, uint16_t port):container(name_,port),my_queue(){
     AutoTrace trace = AutoTrace("hcl::queue(local)");
-    /* Initialize MPI rank and size of world */
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    /* create per server name for shared memory. Needed if multiple servers are
-       spawned on one node*/
-    this->name += "_" + std::to_string(my_server);
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
-        /* Delete existing instance of shared memory space*/
-        bip::file_mapping::remove(backed_file.c_str());
-        /* allocate new shared memory space */
-        segment = bip::managed_mapped_file(bip::create_only, backed_file.c_str(),
-                                             memory_allocated);
-        ShmemAllocator alloc_inst(segment.get_segment_manager());
-        /* Construct queue in the shared memory space. */
-        my_queue = segment.construct<Queue>("Queue")(alloc_inst);
-        mutex = segment.construct<bip::interprocess_mutex>("mtx")();
-        /* Create a RPC server and map the methods to it. */
-        switch (HCL_CONF->RPC_IMPLEMENTATION) {
-#ifdef HCL_ENABLE_RPCLIB
-            case RPCLIB: {
-                std::function<bool(MappedType &)> pushFunc(
-                    std::bind(&hcl::queue<MappedType>::LocalPush, this,
-                              std::placeholders::_1));
-                std::function<std::pair<bool, MappedType>(void)> popFunc(std::bind(
-                        &hcl::queue<MappedType>::LocalPop, this));
-                std::function<size_t(void)> sizeFunc(std::bind(
-                        &hcl::queue<MappedType>::LocalSize, this));
-                std::function<bool(void)> waitForElementFunc(std::bind(
-                        &hcl::queue<MappedType>::LocalWaitForElement, this));
-                rpc->bind(func_prefix+"_Push", pushFunc);
-                rpc->bind(func_prefix+"_Pop", popFunc);
-                rpc->bind(func_prefix+"_WaitForElement", waitForElementFunc);
-                rpc->bind(func_prefix+"_Size", sizeFunc);
-                break;
-            }
-#endif
-#ifdef HCL_ENABLE_THALLIUM_TCP
-            case THALLIUM_TCP:
-#endif
-#ifdef HCL_ENABLE_THALLIUM_ROCE
-            case THALLIUM_ROCE:
-#endif
-#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
-                {
-                    std::function<void(const tl::request &, MappedType &)> pushFunc(
-                        std::bind(&hcl::queue<MappedType>::ThalliumLocalPush, this,
-                                  std::placeholders::_1, std::placeholders::_2));
-                    std::function<void(const tl::request &)> popFunc(std::bind(
-                        &hcl::queue<MappedType>::ThalliumLocalPop, this, std::placeholders::_1));
-                    std::function<void(const tl::request &)> sizeFunc(std::bind(
-                        &hcl::queue<MappedType>::ThalliumLocalSize, this, std::placeholders::_1));
-                    std::function<void(const tl::request &)> waitForElementFunc(std::bind(
-                        &hcl::queue<MappedType>::ThalliumLocalWaitForElement, this,
-                        std::placeholders::_1));
-                    rpc->bind(func_prefix+"_Push", pushFunc);
-                    rpc->bind(func_prefix+"_Pop", popFunc);
-                    rpc->bind(func_prefix+"_WaitForElement", waitForElementFunc);
-                    rpc->bind(func_prefix+"_Size", sizeFunc);
-                    break;
-                }
-#endif
-        }
+        construct_shared_memory();
+        bind_functions();
     }else if (!is_server && server_on_node) {
-        /* Map the clients to their respective memory pools */
-        segment = bip::managed_mapped_file(bip::open_only, backed_file.c_str());
-        std::pair<Queue*, bip::managed_mapped_file::size_type> res;
-        res = segment.find<Queue> ("Queue");
-        my_queue = res.first;
-        std::pair<bip::interprocess_mutex *,
-                  bip::managed_mapped_file::size_type> res2;
-        res2 = segment.find<bip::interprocess_mutex>("mtx");
-        mutex = res2.first;
+        open_shared_memory();
     }
 }
 
@@ -230,6 +156,70 @@ size_t queue<MappedType>::Size(uint16_t &key_int) {
         AutoTrace trace = AutoTrace("hcl::queue::Size(remote)",
                                     key_int);
         return RPC_CALL_WRAPPER1("_Size", key_int, size_t);
+    }
+}
+
+template<typename MappedType>
+void queue<MappedType>::construct_shared_memory() {
+    ShmemAllocator alloc_inst(segment.get_segment_manager());
+    /* Construct queue in the shared memory space. */
+    my_queue = segment.construct<Queue>("Queue")(alloc_inst);
+}
+
+template<typename MappedType>
+void queue<MappedType>::open_shared_memory() {
+    std::pair<Queue*, bip::managed_mapped_file::size_type> res;
+    res = segment.find<Queue> ("Queue");
+    my_queue = res.first;
+}
+
+template<typename MappedType>
+void queue<MappedType>::bind_functions() {
+    /* Create a RPC server and map the methods to it. */
+    switch (HCL_CONF->RPC_IMPLEMENTATION) {
+#ifdef HCL_ENABLE_RPCLIB
+        case RPCLIB: {
+            std::function<bool(MappedType &)> pushFunc(
+                    std::bind(&hcl::queue<MappedType>::LocalPush, this,
+                              std::placeholders::_1));
+            std::function<std::pair<bool, MappedType>(void)> popFunc(std::bind(
+                    &hcl::queue<MappedType>::LocalPop, this));
+            std::function<size_t(void)> sizeFunc(std::bind(
+                    &hcl::queue<MappedType>::LocalSize, this));
+            std::function<bool(void)> waitForElementFunc(std::bind(
+                    &hcl::queue<MappedType>::LocalWaitForElement, this));
+            rpc->bind(func_prefix+"_Push", pushFunc);
+            rpc->bind(func_prefix+"_Pop", popFunc);
+            rpc->bind(func_prefix+"_WaitForElement", waitForElementFunc);
+            rpc->bind(func_prefix+"_Size", sizeFunc);
+            break;
+        }
+#endif
+#ifdef HCL_ENABLE_THALLIUM_TCP
+            case THALLIUM_TCP:
+#endif
+#ifdef HCL_ENABLE_THALLIUM_ROCE
+            case THALLIUM_ROCE:
+#endif
+#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
+            {
+                    std::function<void(const tl::request &, MappedType &)> pushFunc(
+                        std::bind(&hcl::queue<MappedType>::ThalliumLocalPush, this,
+                                  std::placeholders::_1, std::placeholders::_2));
+                    std::function<void(const tl::request &)> popFunc(std::bind(
+                        &hcl::queue<MappedType>::ThalliumLocalPop, this, std::placeholders::_1));
+                    std::function<void(const tl::request &)> sizeFunc(std::bind(
+                        &hcl::queue<MappedType>::ThalliumLocalSize, this, std::placeholders::_1));
+                    std::function<void(const tl::request &)> waitForElementFunc(std::bind(
+                        &hcl::queue<MappedType>::ThalliumLocalWaitForElement, this,
+                        std::placeholders::_1));
+                    rpc->bind(func_prefix+"_Push", pushFunc);
+                    rpc->bind(func_prefix+"_Pop", popFunc);
+                    rpc->bind(func_prefix+"_WaitForElement", waitForElementFunc);
+                    rpc->bind(func_prefix+"_Size", sizeFunc);
+                    break;
+                }
+#endif
     }
 }
 // template class queue<int>;

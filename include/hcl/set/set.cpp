@@ -26,146 +26,17 @@
 /* Constructor to deallocate the shared memory*/
 template<typename KeyType,  typename Hash, typename Compare>
 set<KeyType, Hash, Compare>::~set() {
-    if (is_server)
-        boost::interprocess::file_mapping::remove(backed_file.c_str());
+    this->container::~container();
 }
 
 template<typename KeyType,  typename Hash, typename Compare>
-set<KeyType, Hash, Compare>::set(CharStruct name_, uint16_t port)
-        : is_server(HCL_CONF->IS_SERVER), my_server(HCL_CONF->MY_SERVER),
-          num_servers(HCL_CONF->NUM_SERVERS),
-          comm_size(1), my_rank(0), memory_allocated(HCL_CONF->MEMORY_ALLOCATED),
-          name(name_), segment(), myset(), func_prefix(name_),
-          backed_file(HCL_CONF->BACKED_FILE_DIR + PATH_SEPARATOR + name_+"_"+std::to_string(my_server)),
-          server_on_node(HCL_CONF->SERVER_ON_NODE) {
+set<KeyType, Hash, Compare>::set(CharStruct name_, uint16_t port): container(name_, port), myset() {
     AutoTrace trace = AutoTrace("hcl::set");
-    /* Initialize MPI rank and size of world */
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    /* create per server name for shared memory. Needed if multiple servers are
-       spawned on one node*/
-    this->name += "_" + std::to_string(my_server);
-    /* if current rank is a server */
-    rpc = Singleton<RPCFactory>::GetInstance()->GetRPC(port);
     if (is_server) {
-        /* Delete existing instance of shared memory space*/
-        boost::interprocess::file_mapping::remove(backed_file.c_str());
-        /* allocate new shared memory space */
-        segment = boost::interprocess::managed_mapped_file(
-            boost::interprocess::create_only, backed_file.c_str(), memory_allocated);
-        ShmemAllocator alloc_inst(segment.get_segment_manager());
-        /* Construct set in the shared memory space. */
-        myset = segment.construct<MySet>(name.c_str())(Compare(), alloc_inst);
-        mutex = segment.construct<boost::interprocess::interprocess_mutex>(
-            "mtx")();
-        /* Create a RPC server and map the methods to it. */
-        switch (HCL_CONF->RPC_IMPLEMENTATION) {
-#ifdef HCL_ENABLE_RPCLIB
-            case RPCLIB: {
-                std::function<bool(KeyType &)> putFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalPut, this,
-                              std::placeholders::_1));
-                std::function<bool(KeyType &)> getFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalGet, this,
-                              std::placeholders::_1));
-                std::function<bool(KeyType &)> eraseFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalErase, this,
-                              std::placeholders::_1));
-                std::function<std::vector<KeyType>(void)>
-                        getAllDataInServerFunc(std::bind(
-                            &set<KeyType, Hash, Compare>::LocalGetAllDataInServer,
-                            this));
-                std::function<std::vector<KeyType>(KeyType &, KeyType &)>
-                        containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::LocalContainsInServer, this,
-                                                       std::placeholders::_1,
-                                                       std::placeholders::_2));
-                std::function<std::pair<bool, KeyType>(void)>
-                        seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirst, this));
-                std::function<std::pair<bool, KeyType>(void)>
-                        popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalPopFirst, this));
-                std::function<size_t(void)>
-                        sizeFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSize, this));
-                std::function<std::pair<bool, std::vector<KeyType>>(uint32_t)> localSeekFirstNFunc(
-                        std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirstN, this,
-                                                      std::placeholders::_1));
-                rpc->bind(func_prefix+"_Put", putFunc);
-                rpc->bind(func_prefix+"_Get", getFunc);
-                rpc->bind(func_prefix+"_Erase", eraseFunc);
-                rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
-                rpc->bind(func_prefix+"_Contains", containsInServerFunc);
-
-                rpc->bind(func_prefix+"_SeekFirst", seekFirstFunc);
-                rpc->bind(func_prefix+"_PopFirst", popFirstFunc);
-                rpc->bind(func_prefix+"_SeekFirstN", localSeekFirstNFunc);
-                rpc->bind(func_prefix+"_Size", sizeFunc);
-                break;
-            }
-#endif
-#ifdef HCL_ENABLE_THALLIUM_TCP
-            case THALLIUM_TCP:
-#endif
-#ifdef HCL_ENABLE_THALLIUM_ROCE
-            case THALLIUM_ROCE:
-#endif
-#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
-                {
-
-                std::function<void(const tl::request &, KeyType &)> putFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPut, this,
-                              std::placeholders::_1, std::placeholders::_2));
-                std::function<void(const tl::request &, KeyType &)> getFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalGet, this,
-                              std::placeholders::_1, std::placeholders::_2));
-                std::function<void(const tl::request &, KeyType &)> eraseFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalErase, this,
-                              std::placeholders::_1, std::placeholders::_2));
-                std::function<void(const tl::request &)>
-                        getAllDataInServerFunc(std::bind(
-                            &set<KeyType, Hash, Compare>::ThalliumLocalGetAllDataInServer,
-                            this, std::placeholders::_1));
-                std::function<void(const tl::request &, KeyType &, KeyType &)>
-                        containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalContainsInServer, this,
-                                                       std::placeholders::_1,
-                                                       std::placeholders::_2,
-						       std::placeholders::_3));
-                std::function<void(const tl::request &)>
-                        seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirst, this,
-						std::placeholders::_1));
-                std::function<void(const tl::request &)>
-                        popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPopFirst, this,
-					       std::placeholders::_1));
-                std::function<void(const tl::request &)>
-                        sizeFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSize, this,
-					   std::placeholders::_1));
-                std::function<void(const tl::request &, uint32_t)> localSeekFirstNFunc(
-                        std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirstN, this,
-				  std::placeholders::_1,
-				  std::placeholders::_2));
-                rpc->bind(func_prefix+"_Put", putFunc);
-                rpc->bind(func_prefix+"_Get", getFunc);
-                rpc->bind(func_prefix+"_Erase", eraseFunc);
-                rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
-                rpc->bind(func_prefix+"_Contains", containsInServerFunc);
-
-                rpc->bind(func_prefix+"_SeekFirst", seekFirstFunc);
-                rpc->bind(func_prefix+"_PopFirst", popFirstFunc);
-                // rpc->bind(func_prefix+"_SeekFirstN", localSeekFirstNFunc);
-                rpc->bind(func_prefix+"_Size", sizeFunc);
-		break;
-                }
-#endif
-        }
+        construct_shared_memory();
+        bind_functions();
     }else if (!is_server && server_on_node) {
-        segment = boost::interprocess::managed_mapped_file(
-            boost::interprocess::open_only, backed_file.c_str());
-        std::pair<MySet*,
-                  boost::interprocess::managed_mapped_file::size_type> res;
-        res = segment.find<MySet> (name.c_str());
-        myset = res.first;
-        std::pair<boost::interprocess::interprocess_mutex *,
-                  boost::interprocess::managed_mapped_file::size_type> res2;
-        res2 = segment.find<boost::interprocess::interprocess_mutex>("mtx");
-        mutex = res2.first;
+        open_shared_memory();
     }
 }
 
@@ -469,4 +340,121 @@ size_t set<KeyType, Hash, Compare>::Size(uint16_t &key_int) {
         return RPC_CALL_WRAPPER1("_Size", key_int, ret_type);
     }
 }
+
+template<typename KeyType, typename Hash, typename Compare>
+void set<KeyType, Hash, Compare>::construct_shared_memory() {
+    ShmemAllocator alloc_inst(segment.get_segment_manager());
+    /* Construct set in the shared memory space. */
+    myset = segment.construct<MySet>(name.c_str())(Compare(), alloc_inst);
+}
+
+template<typename KeyType, typename Hash, typename Compare>
+void set<KeyType, Hash, Compare>::open_shared_memory() {
+    std::pair<MySet*,
+            boost::interprocess::managed_mapped_file::size_type> res;
+    res = segment.find<MySet> (name.c_str());
+    myset = res.first;
+}
+
+template<typename KeyType, typename Hash, typename Compare>
+void set<KeyType, Hash, Compare>::bind_functions() {
+    /* Create a RPC server and map the methods to it. */
+    switch (HCL_CONF->RPC_IMPLEMENTATION) {
+#ifdef HCL_ENABLE_RPCLIB
+        case RPCLIB: {
+            std::function<bool(KeyType &)> putFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::LocalPut, this,
+                              std::placeholders::_1));
+            std::function<bool(KeyType &)> getFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::LocalGet, this,
+                              std::placeholders::_1));
+            std::function<bool(KeyType &)> eraseFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::LocalErase, this,
+                              std::placeholders::_1));
+            std::function<std::vector<KeyType>(void)>
+                    getAllDataInServerFunc(std::bind(
+                    &set<KeyType, Hash, Compare>::LocalGetAllDataInServer,
+                    this));
+            std::function<std::vector<KeyType>(KeyType &, KeyType &)>
+                    containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::LocalContainsInServer, this,
+                                                   std::placeholders::_1,
+                                                   std::placeholders::_2));
+            std::function<std::pair<bool, KeyType>(void)>
+                    seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirst, this));
+            std::function<std::pair<bool, KeyType>(void)>
+                    popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalPopFirst, this));
+            std::function<size_t(void)>
+                    sizeFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSize, this));
+            std::function<std::pair<bool, std::vector<KeyType>>(uint32_t)> localSeekFirstNFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirstN, this,
+                              std::placeholders::_1));
+            rpc->bind(func_prefix+"_Put", putFunc);
+            rpc->bind(func_prefix+"_Get", getFunc);
+            rpc->bind(func_prefix+"_Erase", eraseFunc);
+            rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
+            rpc->bind(func_prefix+"_Contains", containsInServerFunc);
+
+            rpc->bind(func_prefix+"_SeekFirst", seekFirstFunc);
+            rpc->bind(func_prefix+"_PopFirst", popFirstFunc);
+            rpc->bind(func_prefix+"_SeekFirstN", localSeekFirstNFunc);
+            rpc->bind(func_prefix+"_Size", sizeFunc);
+            break;
+        }
+#endif
+#ifdef HCL_ENABLE_THALLIUM_TCP
+            case THALLIUM_TCP:
+#endif
+#ifdef HCL_ENABLE_THALLIUM_ROCE
+            case THALLIUM_ROCE:
+#endif
+#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
+            {
+
+                std::function<void(const tl::request &, KeyType &)> putFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPut, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &, KeyType &)> getFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalGet, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &, KeyType &)> eraseFunc(
+                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalErase, this,
+                              std::placeholders::_1, std::placeholders::_2));
+                std::function<void(const tl::request &)>
+                        getAllDataInServerFunc(std::bind(
+                            &set<KeyType, Hash, Compare>::ThalliumLocalGetAllDataInServer,
+                            this, std::placeholders::_1));
+                std::function<void(const tl::request &, KeyType &, KeyType &)>
+                        containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalContainsInServer, this,
+                                                       std::placeholders::_1,
+                                                       std::placeholders::_2,
+						       std::placeholders::_3));
+                std::function<void(const tl::request &)>
+                        seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirst, this,
+						std::placeholders::_1));
+                std::function<void(const tl::request &)>
+                        popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPopFirst, this,
+					       std::placeholders::_1));
+                std::function<void(const tl::request &)>
+                        sizeFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSize, this,
+					   std::placeholders::_1));
+                std::function<void(const tl::request &, uint32_t)> localSeekFirstNFunc(
+                        std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirstN, this,
+				  std::placeholders::_1,
+				  std::placeholders::_2));
+                rpc->bind(func_prefix+"_Put", putFunc);
+                rpc->bind(func_prefix+"_Get", getFunc);
+                rpc->bind(func_prefix+"_Erase", eraseFunc);
+                rpc->bind(func_prefix+"_GetAllData", getAllDataInServerFunc);
+                rpc->bind(func_prefix+"_Contains", containsInServerFunc);
+
+                rpc->bind(func_prefix+"_SeekFirst", seekFirstFunc);
+                rpc->bind(func_prefix+"_PopFirst", popFirstFunc);
+                // rpc->bind(func_prefix+"_SeekFirstN", localSeekFirstNFunc);
+                rpc->bind(func_prefix+"_Size", sizeFunc);
+		break;
+                }
+#endif
+    }
+}
+
 #endif  // INCLUDE_HCL_SET_SET_CPP_

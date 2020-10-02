@@ -58,6 +58,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <hcl/common/container.h>
 
 /** Namespaces Uses **/
 namespace bip = boost::interprocess;
@@ -72,43 +73,28 @@ namespace hcl {
  * @tparam MappedType, the value of the priority_queue
  */
 template<typename MappedType, typename Compare = std::less<MappedType>>
-class priority_queue {
+class priority_queue:public container {
   private:
     /** Class Typedefs for ease of use **/
-    typedef bip::allocator<MappedType,
-                           bip::managed_mapped_file::segment_manager>
+    typedef bip::allocator<MappedType, bip::managed_mapped_file::segment_manager>
     ShmemAllocator;
-    typedef std::priority_queue<MappedType,
-                                std::vector<MappedType, ShmemAllocator>, Compare>
-    Queue;
+    typedef std::priority_queue<MappedType, std::vector<MappedType, ShmemAllocator>, Compare> Queue;
 
     /** Class attributes**/
-    int comm_size, my_rank, num_servers;
-    uint16_t  my_server;
-    std::shared_ptr<RPC> rpc;
-    really_long memory_allocated;
-    bool is_server;
-    boost::interprocess::managed_mapped_file segment;
-    std::string name, func_prefix;
     Queue *queue;
-    boost::interprocess::interprocess_mutex* mutex;
-    bool server_on_node;
-    CharStruct backed_file;
-
   public:
     ~priority_queue();
 
-    explicit priority_queue(std::string name_ = "TEST_PRIORITY_QUEUE", uint16_t port=HCL_CONF->RPC_PORT);
+    void construct_shared_memory() override;
+
+    void open_shared_memory() override;
+
+    void bind_functions() override;
+
+    explicit priority_queue(CharStruct name_ = "TEST_PRIORITY_QUEUE", uint16_t port=HCL_CONF->RPC_PORT);
     Queue * data(){
         if(server_on_node || is_server) return queue;
         else nullptr;
-    }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
-    }
-
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
     }
     bool LocalPush(MappedType &data);
     std::pair<bool, MappedType> LocalPop();

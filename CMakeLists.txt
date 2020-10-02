@@ -44,7 +44,7 @@ set(HCL_SRC  include/hcl/common/singleton.h
                 include/hcl/priority_queue/priority_queue.h
                 include/hcl/set/set.h
                 include/hcl/sequencer/global_sequence.h
-                include/hcl/communication/rpc_factory.h)
+                include/hcl/communication/rpc_factory.h include/hcl/common/container.h)
 
 add_library(${PROJECT_NAME} SHARED ${HCL_SRC})
 

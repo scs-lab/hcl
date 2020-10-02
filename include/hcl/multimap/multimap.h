@@ -57,6 +57,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <hcl/common/container.h>
 
 namespace hcl {
 /**
@@ -67,9 +68,8 @@ namespace hcl {
  */
 template<typename KeyType, typename MappedType, typename Compare =
          std::less<KeyType>>
-class multimap {
+class multimap:public container {
   private:
-    std::hash<KeyType> keyHash;
     /** Class Typedefs for ease of use **/
     typedef std::pair<const KeyType, MappedType> ValueType;
     typedef boost::interprocess::allocator<
@@ -78,33 +78,24 @@ class multimap {
     typedef boost::interprocess::multimap<KeyType, MappedType, Compare,
                                           ShmemAllocator> MyMap;
     /** Class attributes**/
-    int comm_size, my_rank, num_servers;
-    uint16_t  my_server;
-    std::shared_ptr<RPC> rpc;
-    really_long memory_allocated;
-    bool is_server;
-    boost::interprocess::managed_mapped_file segment;
-    std::string name, func_prefix;
+    std::hash<KeyType> keyHash;
     MyMap *mymap;
-    boost::interprocess::interprocess_mutex* mutex;
-    bool server_on_node;
-    CharStruct backed_file;
 
   public:
     /* Constructor to deallocate the shared memory*/
     ~multimap();
+
+    void construct_shared_memory() override;
+
+    void open_shared_memory() override;
+
+    void bind_functions() override;
+
     MyMap * data(){
         if(server_on_node || is_server) return mymap;
         else nullptr;
     }
-    void lock(){
-        if(server_on_node || is_server) mutex->lock();
-    }
-
-    void unlock(){
-        if(server_on_node || is_server) mutex->unlock();
-    }
-    explicit multimap(std::string name_ = "TEST_MULTIMAP", uint16_t port=HCL_CONF->RPC_PORT);
+    explicit multimap(CharStruct name_ = "TEST_MULTIMAP", uint16_t port=HCL_CONF->RPC_PORT);
 
     bool LocalPut(KeyType &key, MappedType &data);
     std::pair<bool, MappedType> LocalGet(KeyType &key);
@@ -118,7 +109,6 @@ class multimap {
     THALLIUM_DEFINE(LocalErase, (key), KeyType &key)
     THALLIUM_DEFINE(LocalContainsInServer, (key), KeyType &key)
     THALLIUM_DEFINE1(LocalGetAllDataInServer)
-
 #endif
 
     bool Put(KeyType &key, MappedType &data);
