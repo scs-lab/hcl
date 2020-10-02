@@ -20,12 +20,14 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <hcl/clock/global_clock.h>
-#include <hcl/communication/rpc_lib.h>
-#include <hcl/unordered_map/unordered_map.h>
-#include <hcl/map/map.h>
-#include <hcl/multimap/multimap.h>
-#include <hcl/priority_queue/priority_queue.h>
-#include <hcl/queue/queue.h>
-#include <hcl/sequencer/global_sequence.h>
-#include <hcl/set/set.h>
+#ifndef INCLUDE_HCL_COMMON_CONSTANTS_H_
+#define INCLUDE_HCL_COMMON_CONSTANTS_H_
+#include <stdint.h>
+#include <hcl/common/data_structures.h>
+
+const uint16_t RPC_PORT = 8080;
+const uint16_t RPC_THREADS = 1;
+const int TEST_REQUEST_SIZE = 1000;
+const CharStruct PATH_SEPARATOR = "/";
+
+#endif  // INCLUDE_HCL_COMMON_CONSTANTS_H_

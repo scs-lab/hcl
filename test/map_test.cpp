@@ -3,9 +3,9 @@
  * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
  * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
- * This file is part of Basket
+ * This file is part of HCL
  * 
- * Basket is free software: you can redistribute it and/or modify
+ * HCL is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
@@ -30,14 +30,14 @@
 #include <execinfo.h>
 #include <chrono>
 #include <map>
-#include <basket/common/data_structures.h>
-#include <basket/map/map.h>
+#include <hcl/common/data_structures.h>
+#include <hcl/map/map.h>
 
 struct KeyType{
     size_t a;
     KeyType():a(0){}
     KeyType(size_t a_):a(a_){}
-#ifdef BASKET_ENABLE_RPCLIB
+#ifdef HCL_ENABLE_RPCLIB
     MSGPACK_DEFINE(a);
 #endif
     /* equal operator for comparing two Matrix. */
@@ -57,7 +57,7 @@ struct KeyType{
     bool Contains(const KeyType &o) const {
         return a==o.a;
     }
-#if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
+#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
     template<typename A>
     void serialize(A& ar) const {
         ar & a;
@@ -131,25 +131,25 @@ int main (int argc,char* argv[])
     const int array_size=TEST_REQUEST_SIZE;
 
     if (size_of_request != array_size) {
-        printf("Please set TEST_REQUEST_SIZE in include/basket/common/constants.h instead. Testing with %d\n", array_size);
+        printf("Please set TEST_REQUEST_SIZE in include/hcl/common/constants.h instead. Testing with %d\n", array_size);
     }
 
     std::array<int,array_size> my_vals=std::array<int,array_size>();
 
     
-    BASKET_CONF->IS_SERVER = is_server;
-    BASKET_CONF->MY_SERVER = my_server;
-    BASKET_CONF->NUM_SERVERS = num_servers;
-    BASKET_CONF->SERVER_ON_NODE = server_on_node || is_server;
-    BASKET_CONF->SERVER_LIST_PATH = "./server_list";
+    HCL_CONF->IS_SERVER = is_server;
+    HCL_CONF->MY_SERVER = my_server;
+    HCL_CONF->NUM_SERVERS = num_servers;
+    HCL_CONF->SERVER_ON_NODE = server_on_node || is_server;
+    HCL_CONF->SERVER_LIST_PATH = "./server_list";
 
-    basket::map<KeyType,std::array<int, array_size>> *map;
+    hcl::map<KeyType,std::array<int, array_size>> *map;
     if (is_server) {
-        map = new basket::map<KeyType,std::array<int,array_size>>();
+        map = new hcl::map<KeyType,std::array<int,array_size>>();
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (!is_server) {
-        map = new basket::map<KeyType,std::array<int,array_size>>();
+        map = new hcl::map<KeyType,std::array<int,array_size>>();
     }
 
     std::map<KeyType,std::array<int, array_size>> lmap=std::map<KeyType,std::array<int, array_size>>();
@@ -161,7 +161,7 @@ int main (int argc,char* argv[])
     // if(is_server){
     //     std::function<int(int)> func=[](int x){ std::cout<<x<<std::endl;return x; };
     //     int a;
-    //     std::function<std::pair<bool,int>(KeyType&,std::array<int, array_size>&,std::string,int)> putFunc(std::bind(&basket::map<KeyType,std::array<int,
+    //     std::function<std::pair<bool,int>(KeyType&,std::array<int, array_size>&,std::string,int)> putFunc(std::bind(&hcl::map<KeyType,std::array<int,
     //                                                                                                                 array_size>>::LocalPutWithCallback<int,int>,map,std::placeholders::_1, std::placeholders::_2,std::placeholders::_3, std::placeholders::_4));
     //     map->Bind("CB_Put", func, "APut",putFunc);
     // }

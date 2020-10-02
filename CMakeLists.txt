@@ -1,75 +1,75 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(basket VERSION 1.0.0 DESCRIPTION "Basket: A library for flexible distributed data containers")
+project(hcl VERSION 1.0.0 DESCRIPTION "HCL: A library for flexible distributed data containers")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gdwarf-2 -g3")
 
-option(BASKET_ENABLE_RPCLIB "allow basket to use RPCLIB" ON)
-option(BASKET_ENABLE_THALLIUM_TCP "allow basket to use RPCLIB" OFF)
-option(BASKET_ENABLE_THALLIUM_ROCE "allow basket to use RPCLIB" OFF)
-option(BASKET_TIMER "Show timing information of library calls." OFF)
-option(BASKET_TRACE "Show traces of library calls." OFF)
+option(HCL_ENABLE_RPCLIB "allow hcl to use RPCLIB" ON)
+option(HCL_ENABLE_THALLIUM_TCP "allow hcl to use RPCLIB" OFF)
+option(HCL_ENABLE_THALLIUM_ROCE "allow hcl to use RPCLIB" OFF)
+option(HCL_TIMER "Show timing information of library calls." OFF)
+option(HCL_TRACE "Show traces of library calls." OFF)
 
-if(BASKET_ENABLE_RPCLIB)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBASKET_ENABLE_RPCLIB")
-    message("BASKET_ENABLE_RPCLIB: ${BASKET_ENABLE_RPCLIB}")
-elseif(BASKET_ENABLE_THALLIUM_TCP)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBASKET_ENABLE_THALLIUM_TCP")
-    message("BASKET_ENABLE_THALLIUM_TCP: ${BASKET_ENABLE_THALLIUM_TCP}")
-elseif(BASKET_ENABLE_THALLIUM_ROCE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBASKET_ENABLE_THALLIUM_ROCE")
-    message("BASKET_ENABLE_THALLIUM_ROCE: ${BASKET_ENABLE_THALLIUM_ROCE}")
+if(HCL_ENABLE_RPCLIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHCL_ENABLE_RPCLIB")
+    message("HCL_ENABLE_RPCLIB: ${HCL_ENABLE_RPCLIB}")
+elseif(HCL_ENABLE_THALLIUM_TCP)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHCL_ENABLE_THALLIUM_TCP")
+    message("HCL_ENABLE_THALLIUM_TCP: ${HCL_ENABLE_THALLIUM_TCP}")
+elseif(HCL_ENABLE_THALLIUM_ROCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHCL_ENABLE_THALLIUM_ROCE")
+    message("HCL_ENABLE_THALLIUM_ROCE: ${HCL_ENABLE_THALLIUM_ROCE}")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 include(GNUInstallDirs)
-include_directories(src/basket)
+include_directories(src/hcl)
 include_directories(src)
 include_directories(include)
-set(BASKET_SRC  include/basket/common/singleton.h
-                include/basket/common/enumerations.h
-                include/basket/common/macros.h
-                include/basket/common/configuration_manager.h
-                include/basket/common/constants.h
-                include/basket/common/typedefs.h
-                include/basket/common/data_structures.h
-                include/basket/communication/rpc_lib.h
-                include/basket/unordered_map/unordered_map.h
-                include/basket/map/map.h
-                include/basket/multimap/multimap.h
-                include/basket/clock/global_clock.h
-                include/basket/queue/queue.h
-                include/basket/priority_queue/priority_queue.h
-                include/basket/set/set.h
-                include/basket/sequencer/global_sequence.h
-                include/basket/communication/rpc_factory.h)
+set(HCL_SRC  include/hcl/common/singleton.h
+                include/hcl/common/enumerations.h
+                include/hcl/common/macros.h
+                include/hcl/common/configuration_manager.h
+                include/hcl/common/constants.h
+                include/hcl/common/typedefs.h
+                include/hcl/common/data_structures.h
+                include/hcl/communication/rpc_lib.h
+                include/hcl/unordered_map/unordered_map.h
+                include/hcl/map/map.h
+                include/hcl/multimap/multimap.h
+                include/hcl/clock/global_clock.h
+                include/hcl/queue/queue.h
+                include/hcl/priority_queue/priority_queue.h
+                include/hcl/set/set.h
+                include/hcl/sequencer/global_sequence.h
+                include/hcl/communication/rpc_factory.h)
 
-add_library(${PROJECT_NAME} SHARED ${BASKET_SRC})
+add_library(${PROJECT_NAME} SHARED ${HCL_SRC})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
-    PUBLIC_HEADER include/basket.h)
+    PUBLIC_HEADER include/hcl.h)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-if(BASKET_TIMER)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE BASKET_TIMER)
+if(HCL_TIMER)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE HCL_TIMER)
 endif()
 
-if(BASKET_TRACE)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE BASKET_TRACE)
+if(HCL_TRACE)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE HCL_TRACE)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-configure_file(basket.pc.in basket.pc @ONLY)
+configure_file(hcl.pc.in hcl.pc @ONLY)
 
-if(BASKET_ENABLE_RPCLIB)
+if(HCL_ENABLE_RPCLIB)
     set(RPC_LIB_FLAGS -lrpc ${RPC_LIB_FLAGS})
 endif()
-if(BASKET_ENABLE_THALLIUM_ROCE OR BASKET_ENABLE_THALLIUM_TCP)
+if(HCL_ENABLE_THALLIUM_ROCE OR HCL_ENABLE_THALLIUM_TCP)
     set(RPC_LIB_FLAGS -lthallium -lmercury -lmercury_util -lmargo -labt ${RPC_LIB_FLAGS})
 endif()
 
@@ -81,7 +81,7 @@ set(LIB_FLAGS ${RPC_LIB_FLAGS} -lmpi -lpthread -lrt)
 # libs for Redis tests
 #set(LIB_FLAGS ${LIB_FLAGS} -lev -L/home/kbateman/install/lib/ -L/home/kbateman/install/lib64/ -lhiredis -lredox)
 
-target_link_libraries(basket ${LIB_FLAGS})
+target_link_libraries(hcl ${LIB_FLAGS})
 
 install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

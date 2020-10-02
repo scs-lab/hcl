@@ -3,9 +3,9 @@
  * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
  * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
- * This file is part of Basket
+ * This file is part of HCL
  * 
- * Basket is free software: you can redistribute it and/or modify
+ * HCL is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
@@ -20,7 +20,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <basket.h>
+#include <hcl.h>
 #include <iostream>
 #include <mpi.h>
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int my_server = 0;
-    basket::queue<int> int_queue("QUEUE", rank == my_server, my_server, 1, true);
+    hcl::queue<int> int_queue("QUEUE", rank == my_server, my_server, 1, true);
     if (rank == my_server) {
         int_queue.WaitForElement(my_server);
         auto result = int_queue.Pop(my_server);

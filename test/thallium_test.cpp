@@ -1,5 +1,5 @@
 #include <iostream>
-#ifdef BASKET_ENABLE_THALLIUM_TCP
+#ifdef HCL_ENABLE_THALLIUM_TCP
 #include <thallium.hpp>
 #include <mpi.h>
 #include <zconf.h>

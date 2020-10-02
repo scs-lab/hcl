@@ -3,9 +3,9 @@
  * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
  * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
- * This file is part of Basket
+ * This file is part of HCL
  * 
- * Basket is free software: you can redistribute it and/or modify
+ * HCL is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
@@ -23,8 +23,8 @@
 // Created by manih on 7/7/2019.
 //
 
-#ifndef BASKET_UTIL_H
-#define BASKET_UTIL_H
+#ifndef HCL_UTIL_H
+#define HCL_UTIL_H
 
 #include <boost/interprocess/containers/string.hpp>
 #include <stdlib.h>
@@ -202,4 +202,4 @@ void SetSignal(){
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
 }
-#endif //BASKET_UTIL_H
+#endif //HCL_UTIL_H

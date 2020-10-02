@@ -3,9 +3,9 @@
  * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
  * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
  *
- * This file is part of Basket
+ * This file is part of HCL
  * 
- * Basket is free software: you can redistribute it and/or modify
+ * HCL is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
@@ -20,7 +20,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <basket/clock/global_clock.h>
+#include <hcl/clock/global_clock.h>
 #include <iostream>
 #include <mpi.h>
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   }
   MPI_Barrier(MPI_COMM_WORLD);
 
-  basket::global_clock *clock = new basket::global_clock("ticktock", rank < num_servers,
+  hcl::global_clock *clock = new hcl::global_clock("ticktock", rank < num_servers,
                                                          rank % num_servers,
                                                          num_servers,
                                                          true);

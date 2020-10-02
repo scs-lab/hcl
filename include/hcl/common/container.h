@@ -19,13 +19,16 @@
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
+//
+// Created by hariharan on 8/13/19.
+//
 
-#include <hcl/clock/global_clock.h>
-#include <hcl/communication/rpc_lib.h>
-#include <hcl/unordered_map/unordered_map.h>
-#include <hcl/map/map.h>
-#include <hcl/multimap/multimap.h>
-#include <hcl/priority_queue/priority_queue.h>
-#include <hcl/queue/queue.h>
-#include <hcl/sequencer/global_sequence.h>
-#include <hcl/set/set.h>
+#ifndef HCL_CONTAINER_H
+#define HCL_CONTAINER_H
+class Container{
+protected:
+private:
+public:
+    Container(){}
+};
+#endif //HCL_CONTAINER_H

@@ -20,12 +20,13 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <hcl/clock/global_clock.h>
-#include <hcl/communication/rpc_lib.h>
-#include <hcl/unordered_map/unordered_map.h>
-#include <hcl/map/map.h>
-#include <hcl/multimap/multimap.h>
-#include <hcl/priority_queue/priority_queue.h>
-#include <hcl/queue/queue.h>
-#include <hcl/sequencer/global_sequence.h>
-#include <hcl/set/set.h>
+#ifndef INCLUDE_HCL_COMMON_ENUMERATIONS_H
+#define INCLUDE_HCL_COMMON_ENUMERATIONS_H
+
+typedef enum RPCImplementation {
+  RPCLIB = 0,
+  THALLIUM_TCP = 1,
+  THALLIUM_ROCE = 2
+} RPCImplementation;
+
+#endif //INCLUDE_HCL_COMMON_ENUMERATIONS_H

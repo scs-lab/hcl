@@ -1,35 +1,35 @@
-# Basket Library
+# HCL Library
 
-The Basket Library, or libbasket, is a distributed data structure
+The HCL Library, or libhcl, is a distributed data structure
 library. It consists of several templated data structures built on top
 of MPI, including a hashmap, map, multimap, priority queue, and
 message queue. There's also a global clock and a sequencer.
 
 ## Compilation
 
-The Basket Library compiles with cmake, so the general procedure is
+The HCL Library compiles with cmake, so the general procedure is
 
 ```bash
-cd basket
+cd hcl
 mkdir build
-cmake -DBASKET_ENABLE_RPCLIB=true ..
+cmake -DHCL_ENABLE_RPCLIB=true ..
 make
 sudo make install
 ```
 If you want to install somewhere besides `/usr/local`, then use
 
 ```bash
-cd basket
+cd hcl
 mkdir build
-cmake -DCMAKE_INSTALL_PREFIX:PATH=/wherever -DBASKET_ENABLE_RPCLIB=true ..
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/wherever -DHCL_ENABLE_RPCLIB=true ..
 make
 make install
 ```
 
 A flag should be added to cmake to indicate preferred RPC library,
 otherwise compilation will fail. If compiling with RPCLib, use
--DBASKET_ENABLE_RPCLIB. If compiling with Thallium, use either
--DBASKET_ENABLE_THALLIUM_TCP or -DBASKET_ENABLE_THALLIUM_ROCE
+-DHCL_ENABLE_RPCLIB. If compiling with Thallium, use either
+-DHCL_ENABLE_THALLIUM_TCP or -DHCL_ENABLE_THALLIUM_ROCE
 
 ### Dependencies
 - mpi
@@ -47,13 +47,13 @@ transport. Also of note is that we uses libfabric (ofi) as the default
 Mercury transport (for TCP and RoCE (verbs)). We used libfabric
 version 1.8.x. If you would rather use a different Mercury transport,
 please change the configuration via
-include/basket/common/configuration_manager.h. The TCP_CONF string is
+include/hcl/common/configuration_manager.h. The TCP_CONF string is
 what we use for tcp via Mercury, and the VERBS_CONF string is how we
 do verbs via Mercury. The VERBS_DOMAIN is the domain used for RoCE.
 
 ## Usage
 
-Since libbasket uses MPI, data structures have to be declared on the
+Since libhcl uses MPI, data structures have to be declared on the
 server and clients. Each data structure is declared with a name, a
 boolean to indicate whether it is on the server or not, the MPI rank
 of the server, and the number of servers it utilizes (generally
@@ -69,10 +69,10 @@ clients to work with servers that are not on their node.
 
 ### Structure Initialization
 
-When creating a basket structure, you currently need to pass a lot of
+When creating a hcl structure, you currently need to pass a lot of
 parameters. For example:
 
-basket::unordered_map(std::string name_, bool is_server_,
+hcl::unordered_map(std::string name_, bool is_server_,
                       uint16_t my_server_, int num_servers_,
                       bool server_on_node_,
                       std::string processor_name_ = "");
@@ -95,12 +95,12 @@ the 40 Gbit network.
 
 unordered_map makes the assumption that a node is running a server and
 multiple clients. the unordered_map_test will perform puts and gets on a
-std::unordered_map locally, a basket::unordered_map locally, and a
-basket::unordered_map remotely.
+std::unordered_map locally, a hcl::unordered_map locally, and a
+hcl::unordered_map remotely.
 
 ### Other Structures
 
-Basket also has queues, priority_queues, multimaps, maps,
+HCL also has queues, priority_queues, multimaps, maps,
 global_clocks, and global_sequence (sequencers). However, the tests
 for these structures are not ironed out yet. The structures are fully
 functional, however, and you should be able to figure them out by
@@ -127,20 +127,20 @@ unordered_map test.
 
 The command to run a test without ctest is:
 
-LD_PRELOAD=`pwd`/libbasket.so mpirun -f test/hostfile -n 4
+LD_PRELOAD=`pwd`/libhcl.so mpirun -f test/hostfile -n 4
 test/unordered_map_test 2 500 1000 1 0
 
 The arguments are ranks_per_server, num_requests, size_of_request,
 server_on_node, and debug. The variable size_of_request should be
-equal to TEST_REQUEST_SIZE in include/basket/common/constants.h, since
+equal to TEST_REQUEST_SIZE in include/hcl/common/constants.h, since
 we have not yet found a way to make dynamically configurable request
 sizes (due to serialization).
 
 ## Configure
 
 ```bash
-$ mkdir $HOME/basket_build
-$ cd $HOME/basket_build
+$ mkdir $HOME/hcl_build
+$ cd $HOME/hcl_build
 $ $HOME/software/install/bin/cmake \
 -DCMAKE_BUILD_TYPE=Debug \
 -DCMAKE_C_COMPILER=/opt/ohpc/pub/compiler/gcc/7.3.0/bin/gcc \
@@ -160,12 +160,12 @@ $ $HOME/software/install/bin/cmake --build ./ --target all -- -j 8
 ## Run
 
 ```bash
-$ cd $HOME/basket_build/test
+$ cd $HOME/hcl_build/test
 $ ctest -V
 ```
 ## Patching Mercury 1.0.1 to work with RoCE
 
-For Basket to work with Mercury 1.0.1 with RoCE, it needs a patched
+For HCL to work with Mercury 1.0.1 with RoCE, it needs a patched
 version of Mercury. The patch allows you to specify a domain to be
 used when connecting to a verbs interface (rather than looking up the
 domain), which is the only practical way to use RoCE. This patch will

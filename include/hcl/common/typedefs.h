@@ -20,12 +20,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <hcl/clock/global_clock.h>
-#include <hcl/communication/rpc_lib.h>
-#include <hcl/unordered_map/unordered_map.h>
-#include <hcl/map/map.h>
-#include <hcl/multimap/multimap.h>
-#include <hcl/priority_queue/priority_queue.h>
-#include <hcl/queue/queue.h>
-#include <hcl/sequencer/global_sequence.h>
-#include <hcl/set/set.h>
+#ifndef INCLUDE_HCL_COMMON_TYPEDEFS_H_
+#define INCLUDE_HCL_COMMON_TYPEDEFS_H_
+
+#include <stdint.h>
+
+typedef uint64_t t_mili;
+typedef uint64_t HTime;
+typedef uint64_t really_long;
+#endif  // INCLUDE_HCL_COMMON_TYPEDEFS_H_
