@@ -28,6 +28,10 @@ namespace hcl{
         virtual void construct_shared_memory() = 0;
         virtual void open_shared_memory() = 0;
         virtual void bind_functions() = 0;
+
+        inline bool is_local(uint16_t &key_int){ return key_int == my_server && server_on_node;}
+        inline bool is_local(){ return server_on_node;}
+
         ~container(){
             if (is_server)
                 boost::interprocess::file_mapping::remove(backed_file.c_str());

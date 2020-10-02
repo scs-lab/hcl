@@ -67,7 +67,7 @@ template<typename KeyType, typename MappedType,typename Hash>
 bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType key,
                                              MappedType data) {
     uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPut(key, data);
     } else {
         return RPC_CALL_WRAPPER("_Put", key_int, bool,
@@ -106,7 +106,7 @@ std::pair<bool, MappedType>
 unordered_map<KeyType, MappedType, Hash>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalGet(key);
     } else {
         typedef std::pair<bool, MappedType> ret_type;
@@ -134,7 +134,7 @@ std::pair<bool, MappedType>
 unordered_map<KeyType, MappedType, Hash>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalErase(key);
     } else {
       typedef std::pair<bool, MappedType> ret_type;
@@ -189,16 +189,13 @@ unordered_map<KeyType, MappedType, Hash>::LocalGetAllDataInServer() {
 template<typename KeyType, typename MappedType,typename Hash>
 std::vector<std::pair<KeyType, MappedType>>
 unordered_map<KeyType, MappedType, Hash>::GetAllDataInServer() {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalGetAllDataInServer();
     }
     else {
       typedef std::vector<std::pair<KeyType, MappedType> > ret_type;
       auto my_server_i=my_server;
       return RPC_CALL_WRAPPER1("_GetAllData", my_server_i, ret_type);
-      // return rpc->call(
-      // 		       my_server, func_prefix+"_GetAllData").template
-      // 	as<std::vector<std::pair<KeyType, MappedType>>>();
     }
 }
 

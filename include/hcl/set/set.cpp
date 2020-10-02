@@ -65,7 +65,7 @@ template<typename KeyType,  typename Hash, typename Compare>
 bool set<KeyType, Hash, Compare>::Put(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPut(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::set::Put(remote)", key);
@@ -102,7 +102,7 @@ template<typename KeyType,  typename Hash, typename Compare>
 bool set<KeyType, Hash, Compare>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalGet(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::set::Get(remote)", key);
@@ -125,7 +125,7 @@ bool
 set<KeyType, Hash, Compare>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalErase(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::set::Erase(remote)", key);
@@ -209,7 +209,7 @@ std::vector<KeyType> set<KeyType, Hash, Compare>::LocalContainsInServer(KeyType 
 template<typename KeyType,  typename Hash, typename Compare>
 std::vector<KeyType>
 set<KeyType, Hash, Compare>::ContainsInServer(KeyType &key_start, KeyType &key_end) {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalContainsInServer(key_start,key_end);
     }
     else {
@@ -239,7 +239,7 @@ std::vector<KeyType> set<KeyType, Hash, Compare>::LocalGetAllDataInServer() {
 template<typename KeyType,  typename Hash, typename Compare>
 std::vector<KeyType>
 set<KeyType, Hash, Compare>::GetAllDataInServer() {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalGetAllDataInServer();
     }
     else {
@@ -263,7 +263,7 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalSeekFirst() {
 
 template<typename KeyType,  typename Hash, typename Compare>
 std::pair<bool, KeyType> set<KeyType, Hash, Compare>::SeekFirst(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalSeekFirst();
     } else {
         AutoTrace trace = AutoTrace("hcl::set::SeekFirst(remote)",
@@ -290,7 +290,7 @@ std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::LocalSeekFirs
 
 template<typename KeyType,  typename Hash, typename Compare>
 std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::SeekFirstN(uint16_t &key_int,uint32_t n){
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalSeekFirstN(n);
     } else {
         AutoTrace trace = AutoTrace("hcl::set::SeekFirstN(remote)", key_int,n);
@@ -314,7 +314,7 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalPopFirst() {
 
 template<typename KeyType,  typename Hash, typename Compare>
 std::pair<bool, KeyType> set<KeyType, Hash, Compare>::PopFirst(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPopFirst();
     } else {
         AutoTrace trace = AutoTrace("hcl::set::PopFirst(remote)",
@@ -332,7 +332,7 @@ size_t set<KeyType, Hash, Compare>::LocalSize() {
 
 template<typename KeyType,  typename Hash, typename Compare>
 size_t set<KeyType, Hash, Compare>::Size(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalSize();
     } else {
         AutoTrace trace = AutoTrace("hcl::set::Size(remote)", key_int);

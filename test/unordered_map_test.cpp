@@ -85,7 +85,7 @@ int main (int argc,char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
     int ranks_per_server=comm_size,num_request=10000;
     long size_of_request=1000;
-    bool debug=true;
+    bool debug=false;
     bool server_on_node=false;
     if(argc > 1)    ranks_per_server = atoi(argv[1]);
     if(argc > 2)    num_request = atoi(argv[2]);

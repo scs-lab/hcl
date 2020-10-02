@@ -103,7 +103,7 @@ class global_sequence :public container{
         else nullptr;
     }
     uint64_t GetNextSequence(){
-        if (server_on_node) {
+        if (is_local()) {
             return LocalGetNextSequence();
         }
         else {
@@ -112,7 +112,7 @@ class global_sequence :public container{
         }
     }
     uint64_t GetNextSequenceServer(uint16_t &server){
-        if (my_server == server && server_on_node) {
+        if (is_local(server)) {
             return LocalGetNextSequence();
         }
         else {

@@ -35,11 +35,6 @@ bool map<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
     AutoTrace trace = AutoTrace("hcl::map::Put(local)", key, data);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
     mymap->insert_or_assign(key, data);
-    /*typename MyMap::iterator iterator = mymap->find(key);
-      if (iterator != mymap->end()) {
-      mymap->erase(iterator);
-      }
-      mymap->insert(std::pair<KeyType, MappedType>(key, data));*/
     return true;
 }
 
@@ -54,7 +49,7 @@ bool map<KeyType, MappedType, Compare>::Put(KeyType &key,
                                             MappedType &data) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPut(key, data);
     } else {
         AutoTrace trace = AutoTrace("hcl::map::Put(remote)", key, data);
@@ -94,7 +89,7 @@ std::pair<bool, MappedType>
 map<KeyType, MappedType, Compare>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalGet(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::map::Get(remote)", key);
@@ -119,7 +114,7 @@ std::pair<bool, MappedType>
 map<KeyType, MappedType, Compare>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalErase(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::map::Erase(remote)", key);
@@ -203,7 +198,7 @@ map<KeyType, MappedType, Compare>::LocalContainsInServer(KeyType &key_start,KeyT
 template<typename KeyType, typename MappedType, typename Compare>
 std::vector<std::pair<KeyType, MappedType>>
 map<KeyType, MappedType, Compare>::ContainsInServer(KeyType &key_start,KeyType &key_end) {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalContainsInServer(key_start,key_end);
     }
     else {
@@ -234,7 +229,7 @@ map<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
 template<typename KeyType, typename MappedType, typename Compare>
 std::vector<std::pair<KeyType, MappedType>>
 map<KeyType, MappedType, Compare>::GetAllDataInServer() {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalGetAllDataInServer();
     }
     else {

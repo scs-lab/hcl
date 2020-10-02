@@ -65,7 +65,7 @@ bool priority_queue<MappedType, Compare>::LocalPush(MappedType &data) {
 template<typename MappedType, typename Compare>
 bool priority_queue<MappedType, Compare>::Push(MappedType &data,
                                                uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPush(data);
     } else {
         AutoTrace trace = AutoTrace("hcl::priority_queue::Push(remote)",
@@ -104,7 +104,7 @@ priority_queue<MappedType, Compare>::LocalPop() {
 template<typename MappedType, typename Compare>
 std::pair<bool, MappedType>
 priority_queue<MappedType, Compare>::Pop(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPop();
     } else {
         AutoTrace trace = AutoTrace("hcl::priority_queue::Pop(remote)",
@@ -142,7 +142,7 @@ priority_queue<MappedType, Compare>::LocalTop() {
 template<typename MappedType, typename Compare>
 std::pair<bool, MappedType>
 priority_queue<MappedType, Compare>::Top(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalTop();
     } else {
         AutoTrace trace = AutoTrace("hcl::priority_queue::Top(remote)",
@@ -173,7 +173,7 @@ size_t priority_queue<MappedType, Compare>::LocalSize() {
  */
 template<typename MappedType, typename Compare>
 size_t priority_queue<MappedType, Compare>::Size(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalSize();
     } else {
         AutoTrace trace = AutoTrace("hcl::priority_queue::Top(remote)",

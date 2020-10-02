@@ -74,7 +74,7 @@ bool multimap<KeyType, MappedType, Compare>::Put(KeyType &key,
                                                  MappedType &data) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPut(key, data);
     } else {
         AutoTrace trace = AutoTrace("hcl::multimap::Put(remote)", key,
@@ -116,7 +116,7 @@ std::pair<bool, MappedType>
 multimap<KeyType, MappedType, Compare>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalGet(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::multimap::Get(remote)", key);
@@ -141,7 +141,7 @@ std::pair<bool, MappedType>
 multimap<KeyType, MappedType, Compare>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalErase(key);
     } else {
         AutoTrace trace = AutoTrace("hcl::multimap::Erase(remote)", key);
@@ -237,7 +237,7 @@ template<typename KeyType, typename MappedType, typename Compare>
 std::vector<std::pair<KeyType, MappedType>>
 multimap<KeyType, MappedType,
          Compare>::ContainsInServer(KeyType &key) {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalContainsInServer(key);
     }
     else {
@@ -271,7 +271,7 @@ multimap<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
 template<typename KeyType, typename MappedType, typename Compare>
 std::vector<std::pair<KeyType, MappedType>>
 multimap<KeyType, MappedType, Compare>::GetAllDataInServer() {
-    if (server_on_node) {
+    if (is_local()) {
         return LocalGetAllDataInServer();
     }
     else {

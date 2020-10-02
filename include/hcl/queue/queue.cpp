@@ -58,7 +58,7 @@ bool queue<MappedType>::LocalPush(MappedType &data) {
 template<typename MappedType>
 bool queue<MappedType>::Push(MappedType &data,
                              uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPush(data);
     } else {
         AutoTrace trace = AutoTrace("hcl::queue::Push(remote)", data,
@@ -97,7 +97,7 @@ queue<MappedType>::LocalPop() {
 template<typename MappedType>
 std::pair<bool, MappedType>
 queue<MappedType>::Pop(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalPop();
     } else {
         AutoTrace trace = AutoTrace("hcl::queue::Pop(remote)",
@@ -121,7 +121,7 @@ bool queue<MappedType>::LocalWaitForElement() {
 
 template<typename MappedType>
 bool queue<MappedType>::WaitForElement(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalWaitForElement();
     } else {
         AutoTrace trace = AutoTrace(
@@ -150,7 +150,7 @@ size_t queue<MappedType>::LocalSize() {
  */
 template<typename MappedType>
 size_t queue<MappedType>::Size(uint16_t &key_int) {
-    if (key_int == my_server && server_on_node) {
+    if (is_local(key_int)) {
         return LocalSize();
     } else {
         AutoTrace trace = AutoTrace("hcl::queue::Size(remote)",
