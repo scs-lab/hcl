@@ -29,27 +29,21 @@ include_directories(src/basket)
 include_directories(src)
 include_directories(include)
 set(BASKET_SRC  include/basket/common/singleton.h
-                include/basket/common/debug.h
                 include/basket/common/enumerations.h
                 include/basket/common/macros.h
                 include/basket/common/configuration_manager.h
-                src/basket/common/debug.cpp
                 include/basket/common/constants.h
                 include/basket/common/typedefs.h
                 include/basket/common/data_structures.h
-                src/basket/common/data_structures.cpp
                 include/basket/communication/rpc_lib.h
-                src/basket/communication/rpc_lib.cpp
                 include/basket/unordered_map/unordered_map.h
                 include/basket/map/map.h
                 include/basket/multimap/multimap.h
                 include/basket/clock/global_clock.h
-                src/basket/clock/global_clock.cpp
                 include/basket/queue/queue.h
                 include/basket/priority_queue/priority_queue.h
                 include/basket/set/set.h
                 include/basket/sequencer/global_sequence.h
-                src/basket/sequencer/global_sequence.cpp
                 include/basket/communication/rpc_factory.h)
 
 add_library(${PROJECT_NAME} SHARED ${BASKET_SRC})
@@ -93,7 +87,7 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-option(BUILD_TEST "Build the unit tests" OFF)
+option(BUILD_TEST "Build the unit tests" ON)
 if(BUILD_TEST)
     enable_testing()
     add_subdirectory(test)

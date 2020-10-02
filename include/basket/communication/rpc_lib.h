@@ -41,8 +41,8 @@
 #if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
 #include <thallium.hpp>
 #include <thallium/serialization/serialize.hpp>
-#include <thallium/serialization/buffer_input_archive.hpp>
-#include <thallium/serialization/buffer_output_archive.hpp>
+#include <thallium/serialization/proc_input_archive.hpp>
+#include <thallium/serialization/proc_output_archive.hpp>
 #include <thallium/serialization/stl/array.hpp>
 #include <thallium/serialization/stl/complex.hpp>
 #include <thallium/serialization/stl/deque.hpp>
@@ -100,7 +100,23 @@ private:
     std::shared_ptr<tl::engine> thallium_engine;
     CharStruct engine_init_str;
     std::vector<tl::endpoint> thallium_endpoints;
-    void init_engine_and_endpoints(CharStruct conf);
+    tl::endpoint get_endpoint(CharStruct protocol, CharStruct server_name, uint16_t server_port){
+        // We use addr lookup because mercury addresses must be exactly 15 char
+        char ip[16];
+        struct hostent *he = gethostbyname(server_name.c_str());
+        in_addr **addr_list = (struct in_addr **)he->h_addr_list;
+        strcpy(ip, inet_ntoa(*addr_list[0]));
+        CharStruct lookup_str = protocol + "://" + std::string(ip) + ":" + std::to_string(server_port);
+        return thallium_engine->lookup(lookup_str.c_str());
+    }
+    void init_engine_and_endpoints(CharStruct protocol) {
+        thallium_engine = basket::Singleton<tl::engine>::GetInstance(protocol.c_str(), MARGO_CLIENT_MODE);
+        thallium_endpoints.reserve(server_list.size());
+        for (std::vector<CharStruct>::size_type i = 0; i < server_list.size(); ++i) {
+            thallium_endpoints.push_back(get_endpoint(protocol,server_list[i],server_port + i));
+        }
+    }
+
     /*std::promise<void> thallium_exit_signal;
 
       void runThalliumServer(std::future<void> futureObj){
@@ -112,7 +128,32 @@ private:
 #endif
     std::vector<CharStruct> server_list;
   public:
-    ~RPC();
+    ~RPC() {
+        if (BASKET_CONF->IS_SERVER) {
+            switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+                case RPCLIB: {
+          // Twiddle thumbs
+          break;
+        }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+                case THALLIUM_TCP:
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+                    case THALLIUM_ROCE:
+#endif
+#if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
+                {
+                    // Mercury addresses in endpoints must be freed before finalizing Thallium
+                    thallium_endpoints.clear();
+                    thallium_engine->finalize();
+                    break;
+                }
+#endif
+            }
+        }
+    }
 
     RPC() : server_list(),
              server_port(BASKET_CONF->RPC_PORT) {
@@ -172,9 +213,11 @@ private:
 #endif
         }
     }
+#ifdef BASKET_ENABLE_RPCLIB
     for (std::vector<rpc::client>::size_type i = 0; i < server_list.size(); ++i) {
         rpclib_clients.push_back(std::make_unique<rpc::client>(server_list[i].c_str(), server_port + i));
     }
+#endif
     run(BASKET_CONF->RPC_THREADS);
 }
 
@@ -182,7 +225,31 @@ private:
     template <typename F>
     void bind(CharStruct str, F func);
 
-    void run(size_t workers = RPC_THREADS);
+    void run(size_t workers = RPC_THREADS) {
+        AutoTrace trace = AutoTrace("RPC::run", workers);
+        if (BASKET_CONF->IS_SERVER){
+            switch (BASKET_CONF->RPC_IMPLEMENTATION) {
+#ifdef BASKET_ENABLE_RPCLIB
+                case RPCLIB: {
+                    rpclib_server->async_run(workers);
+                break;
+            }
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_TCP
+                case THALLIUM_TCP:
+#endif
+#ifdef BASKET_ENABLE_THALLIUM_ROCE
+                    case THALLIUM_ROCE:
+#endif
+#if defined(BASKET_ENABLE_THALLIUM_TCP) || defined(BASKET_ENABLE_THALLIUM_ROCE)
+                {
+                    thallium_engine = basket::Singleton<tl::engine>::GetInstance(engine_init_str.c_str(), THALLIUM_SERVER_MODE,true,BASKET_CONF->RPC_THREADS);
+                    break;
+                }
+#endif
+            }
+        }
+    }
 
 #ifdef BASKET_ENABLE_THALLIUM_ROCE
     template<typename MappedType>

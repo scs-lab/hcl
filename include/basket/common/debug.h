@@ -85,7 +85,10 @@ inline void handler(int sig) {
 #define DBGVAR3(var1, var2, var3)
 #define DBGMSG(msg)
 #endif
+#endif  // INCLUDE_BASKET_COMMON_DEBUG_H_
 
+#ifndef INCLUDE_BASKET_COMMON_DEBUG_TIMER_H_
+#define INCLUDE_BASKET_COMMON_DEBUG_TIMER_H_
 /**
  * Time all functions and instrument it
  */
@@ -117,6 +120,10 @@ class Timer {
     std::chrono::high_resolution_clock::time_point t1;
     double elapsed_time;
 };
+
+#endif  // INCLUDE_BASKET_COMMON_DEBUG_TIMER_H_
+#ifndef INCLUDE_BASKET_COMMON_DEBUG_AUTOTRACE_H_
+#define INCLUDE_BASKET_COMMON_DEBUG_AUTOTRACE_H_
 /**
  * Implement Auto tracing Mechanism.
  */
@@ -125,6 +132,7 @@ using std::endl;
 using std::string;
 
 using namespace std;
+
 class AutoTrace
 {
 #if  defined(BASKET_TIMER)
@@ -202,6 +210,10 @@ class AutoTrace
     }
 };
 
+int AutoTrace::rank=-1;
+int AutoTrace::item=0;
+#endif  // INCLUDE_BASKET_COMMON_DEBUG_AUTOTRACE_H_
 
 
-#endif  // INCLUDE_BASKET_COMMON_DEBUG_H_
+
+

@@ -130,16 +130,12 @@ Response RPC::call(uint16_t server_index,
         case THALLIUM_TCP: {
             std::shared_ptr<tl::engine> thallium_client;
             if (BASKET_CONF->IS_SERVER) {
-                thallium_client = std::make_shared<tl::engine>(BASKET_CONF->TCP_CONF.c_str(), MARGO_CLIENT_MODE);
+                thallium_client = std::make_shared<tl::engine>(BASKET_CONF->TCP_CONF.c_str(), THALLIUM_CLIENT_MODE);
             }
             else {
                 thallium_client = thallium_engine;
             }
-
             tl::remote_procedure remote_procedure = thallium_client->define(func_name.c_str());
-            // Setup args for RDMA bulk transfer
-            // std::vector<std::pair<void*,std::size_t>> segments(num_args);
-
             return remote_procedure.on(thallium_endpoints[server_index])(std::forward<Args>(args)...);
             break;
         }
@@ -196,8 +192,8 @@ Response RPC::call(CharStruct &server,
             tl::remote_procedure remote_procedure = thallium_client->define(func_name.c_str());
             // Setup args for RDMA bulk transfer
             // std::vector<std::pair<void*,std::size_t>> segments(num_args);
-
-            return remote_procedure.on(thallium_endpoints[server_index])(std::forward<Args>(args)...);
+            auto end_point = get_endpoint(BASKET_CONF->TCP_CONF,server,port);
+            return remote_procedure.on(end_point)(std::forward<Args>(args)...);
             break;
         }
 #endif

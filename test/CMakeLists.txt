@@ -1,6 +1,6 @@
 # target_link_libraries(DistributedHashMapTest ${CMAKE_BINARY_DIR}/libbasket.so)
 
-set(examples unordered_map_test map_test queue_test priority_queue_test multimap_test set_test)
+set(examples unordered_map_test map_test queue_test priority_queue_test multimap_test set_test thallium_test)
 # global_clock_test global_sequence_test
 
 add_custom_target(copy_hostfile)
@@ -19,7 +19,7 @@ add_custom_command(
 
 # Compile all examples
 foreach (example ${examples})
-    add_executable (${example} ${example}.cpp util.h)
+    add_executable (${example} ${example}.cpp util.h )
     add_dependencies(${example} ${PROJECT_NAME})
     add_dependencies(${example} copy_hostfile)
     add_dependencies(${example} copy_server_list)

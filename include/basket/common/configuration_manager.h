@@ -65,7 +65,7 @@ namespace basket{
               SERVER_LIST(),
               BACKED_FILE_DIR("/dev/shm"),
               MEMORY_ALLOCATED(1024ULL * 1024ULL * 128ULL),
-              RPC_PORT(8080), RPC_THREADS(1),
+              RPC_PORT(9000), RPC_THREADS(1),
 #if defined(BASKET_ENABLE_RPCLIB)
               RPC_IMPLEMENTATION(RPCLIB),
 #elif defined(BASKET_ENABLE_THALLIUM_TCP)
@@ -73,7 +73,7 @@ namespace basket{
 #elif defined(BASKET_ENABLE_THALLIUM_ROCE)
         RPC_IMPLEMENTATION(THALLIUM_ROCE),
 #endif
-              TCP_CONF("ofi+tcp"), VERBS_CONF("verbs"), VERBS_DOMAIN("mlx5_0"),
+              TCP_CONF("tcp"), VERBS_CONF("verbs"), VERBS_DOMAIN("mlx5_0"),
               IS_SERVER(false), MY_SERVER(0), NUM_SERVERS(1),
               SERVER_ON_NODE(true), SERVER_LIST_PATH("./server_list"), DYN_CONFIG(false) {
           AutoTrace trace = AutoTrace("ConfigurationManager");
