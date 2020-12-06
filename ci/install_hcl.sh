@@ -24,6 +24,8 @@ set +x
 . ${SPACK_DIR}/share/spack/setup-env.sh
 set -x
 
+spack uninstall mercury@2.0.0rc1
+
 spack view symlink ${INSTALL_DIR} ${GCC_SPEC} ${MPICH_SPEC} ${MERCURY_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 
 mkdir build
