@@ -30,16 +30,13 @@ else
   set +x
   . ${SPACK_DIR}/share/spack/setup-env.sh
   set -x
-  
-  count=$(spack env list | grep hcl | wc -l)
-  if [ $count -ge 1 ]
+ 
+  if [ ! -d ${SPACK_DIR}/var/spack/environments/hcl ]
   then
   spack env deactivate hcl
   spack env remove -y hcl
   fi
 fi
-
-
 
 spack compiler list
 
