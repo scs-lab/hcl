@@ -37,22 +37,22 @@ spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
 GCC_SPEC="gcc@${GCC_VERSION}"
 spack install -y ${GCC_SPEC}
 
-MPICH_SPEC="mpich@${MPICH_VERSION}%${GCC_SPEC}"
-spack install -y  ${MPICH_SPEC}
+#MPICH_SPEC="mpich@${MPICH_VERSION}%${GCC_SPEC}"
+#spack install -y  ${MPICH_SPEC}
+#
+#MERCURY_SPEC="mercury@${MERCURY_VERSION}%${GCC_SPEC}"
+#spack install -y --no-checksum ${MERCURY_SPEC}
+#
+#THALLIUM_SPEC="mochi-thallium~cereal@${THALLIUM_VERSION}%${GCC_SPEC}"
+#spack install ${THALLIUM_SPEC}
+#
+#RPCLIB_SPEC="rpclib@${RPCLIB_VERSION}%${GCC_SPEC}"
+#spack install ${RPCLIB_SPEC}
+#
+#BOOST_SPEC="boost@${BOOST_VERSION}%${GCC_SPEC}"
+#spack install ${BOOST_SPEC}
 
-MERCURY_SPEC="mercury@${MERCURY_VERSION}%${GCC_SPEC}"
-spack install -y --no-checksum ${MERCURY_SPEC}
-
-THALLIUM_SPEC="mochi-thallium~cereal@${THALLIUM_VERSION}%${GCC_SPEC}"
-spack install ${THALLIUM_SPEC}
-#spack install pkg-config
-RPCLIB_SPEC="rpclib@${RPCLIB_VERSION}%${GCC_SPEC}"
-spack install ${RPCLIB_SPEC}
-
-BOOST_SPEC="boost@${BOOST_VERSION}%${GCC_SPEC}"
-spack install ${BOOST_SPEC}
-
-spack env create hcl
-spack env activate hcl
-spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
-ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
+# spack env create hcl
+# spack env activate hcl
+# spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
+# ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
