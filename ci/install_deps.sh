@@ -58,5 +58,5 @@ spack env create hcl
 fi
 
 spack env activate hcl
-spack install ${GCC_SPEC} #${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
+spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
