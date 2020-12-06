@@ -23,6 +23,12 @@ else
   cd ${SPACK_DIR}
   git pull
   git submodule update --recursive --remote
+  count=$(spack env list | grep hcl | wc -l)
+  if [ $count -ge 1 ]
+  then
+  spack env deactivate hcl
+  spack env remove -y hcl
+  fi
 fi
 
 set +x
@@ -52,11 +58,7 @@ spack install ${RPCLIB_SPEC}
 BOOST_SPEC="boost@${BOOST_VERSION}%${GCC_SPEC}"
 spack install ${BOOST_SPEC}
 
-if [ ! -d ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view ] 
-then
 spack env create hcl
-fi
-
 spack env activate hcl
 spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
