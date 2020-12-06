@@ -61,7 +61,7 @@ spack install ${RPCLIB_SPEC}
 BOOST_SPEC="boost@${BOOST_VERSION}%${GCC_SPEC}"
 spack install ${BOOST_SPEC}
 
-spack env create hcl
-spack env activate hcl
-spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
-ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
+# spack env create hcl
+# spack env activate hcl
+# spack install ${GCC_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
+# ls ${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
