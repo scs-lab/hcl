@@ -19,10 +19,18 @@ if [ ! -d ${INSTALL_DIR} ]
 then
   mkdir -p ${INSTALL_DIR}
   git clone --recursive https://github.com/scs-lab/spack ${SPACK_DIR}
+  set +x
+  . ${SPACK_DIR}/share/spack/setup-env.sh
+  set -x
 else
   cd ${SPACK_DIR}
   git pull
   git submodule update --recursive --remote
+  
+  set +x
+  . ${SPACK_DIR}/share/spack/setup-env.sh
+  set -x
+  
   count=$(spack env list | grep hcl | wc -l)
   if [ $count -ge 1 ]
   then
@@ -31,9 +39,7 @@ else
   fi
 fi
 
-set +x
-. ${SPACK_DIR}/share/spack/setup-env.sh
-set -x
+
 
 spack compiler list
 
