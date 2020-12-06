@@ -75,7 +75,7 @@ namespace hcl {
  *
  * @tparam MappedType, the value of the HashMap
  */
-template<typename KeyType, typename MappedType,typename Hash = std::hash<KeyType>>
+template<typename KeyType, typename MappedType,typename Hash = std::hash<KeyType>, class Allocator=nullptr_t ,class SharedType=nullptr_t>
 class unordered_map:public container {
   private:
     /** Class Typedefs for ease of use **/

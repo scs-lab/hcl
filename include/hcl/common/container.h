@@ -32,6 +32,21 @@ namespace hcl{
         inline bool is_local(uint16_t &key_int){ return key_int == my_server && server_on_node;}
         inline bool is_local(){ return server_on_node;}
 
+        template<typename Allocator, typename MappedType, typename SharedType>
+        typename std::enable_if_t<std::is_same<Allocator, nullptr_t>::value,MappedType>
+        GetData(MappedType & data){
+            return std::move(data);
+        }
+
+        template<typename Allocator, typename MappedType, typename SharedType>
+        typename std::enable_if_t<! std::is_same<Allocator, nullptr_t>::value,SharedType>
+        GetData(MappedType & data){
+            Allocator allocator(segment.get_segment_manager());
+            SharedType value(allocator);
+            value.assign(data);
+            return std::move(value);
+        }
+
         ~container(){
             if (is_server)
                 boost::interprocess::file_mapping::remove(backed_file.c_str());

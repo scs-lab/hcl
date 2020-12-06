@@ -25,13 +25,13 @@
 #define INCLUDE_HCL_UNORDERED_MAP_UNORDERED_MAP_CPP_
 
 /* Constructor to deallocate the shared memory*/
-template<typename KeyType, typename MappedType,typename Hash>
-unordered_map<KeyType, MappedType,Hash>::~unordered_map() {
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::~unordered_map() {
     this->container::~container();
 }
 
-template<typename KeyType, typename MappedType,typename Hash>
-unordered_map<KeyType, MappedType, Hash>::unordered_map(CharStruct name_, uint16_t port)
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::unordered_map(CharStruct name_, uint16_t port)
         : container(name_,port), myHashMap(), size_occupied(0){
     // init my_server, num_servers, server_on_node, processor_name from RPC
     AutoTrace trace = AutoTrace("hcl::unordered_map");
@@ -49,11 +49,12 @@ unordered_map<KeyType, MappedType, Hash>::unordered_map(CharStruct name_, uint16
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType,typename Hash>
-bool unordered_map<KeyType, MappedType, Hash>::LocalPut(KeyType &key,
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
+bool unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalPut(KeyType &key,
                                                   MappedType &data) {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>lock(*mutex);
-    auto iter = myHashMap->insert_or_assign(key, data);
+    auto value = GetData<Allocator, MappedType, SharedType>(data);
+    auto iter = myHashMap->insert_or_assign(key, value);
     if(iter.second) size_occupied += CalculateSize<KeyType>().GetSize(key) + CalculateSize<MappedType>().GetSize(data);
     return true;
 }
@@ -63,8 +64,8 @@ bool unordered_map<KeyType, MappedType, Hash>::LocalPut(KeyType &key,
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType,typename Hash>
-bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType key,
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
+bool unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::Put(KeyType key,
                                              MappedType data) {
     uint16_t key_int = (uint16_t)keyHash(key)% num_servers;
     if (is_local(key_int)) {
@@ -82,9 +83,9 @@ bool unordered_map<KeyType, MappedType, Hash>::Put(KeyType key,
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::pair<bool, MappedType>
-unordered_map<KeyType, MappedType, Hash>::LocalGet(KeyType &key) {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalGet(KeyType &key) {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
     typename MyHashMap::iterator iterator = myHashMap->find(key);
@@ -101,9 +102,9 @@ unordered_map<KeyType, MappedType, Hash>::LocalGet(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::pair<bool, MappedType>
-unordered_map<KeyType, MappedType, Hash>::Get(KeyType &key) {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
     if (is_local(key_int)) {
@@ -116,9 +117,9 @@ unordered_map<KeyType, MappedType, Hash>::Get(KeyType &key) {
 
 
 
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::pair<bool, MappedType>
-unordered_map<KeyType, MappedType, Hash>::LocalErase(KeyType &key) {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalErase(KeyType &key) {
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
     typename MyHashMap::iterator iterator = myHashMap->find(key);
@@ -129,9 +130,9 @@ unordered_map<KeyType, MappedType, Hash>::LocalErase(KeyType &key) {
     }else return std::pair<bool, MappedType>(false, MappedType());
 }
 
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::pair<bool, MappedType>
-unordered_map<KeyType, MappedType, Hash>::Erase(KeyType &key) {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
     if (is_local(key_int)) {
@@ -146,9 +147,9 @@ unordered_map<KeyType, MappedType, Hash>::Erase(KeyType &key) {
 }
 
 
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-unordered_map<KeyType, MappedType, Hash>::GetAllData() {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::GetAllData() {
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
     auto current_server = GetAllDataInServer();
@@ -165,9 +166,9 @@ unordered_map<KeyType, MappedType, Hash>::GetAllData() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType,typename Hash, typename Allocator ,typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-unordered_map<KeyType, MappedType, Hash>::LocalGetAllDataInServer() {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalGetAllDataInServer() {
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
     {
@@ -186,9 +187,9 @@ unordered_map<KeyType, MappedType, Hash>::LocalGetAllDataInServer() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType,typename Hash>
+template<typename KeyType, typename MappedType, typename Hash, typename Allocator ,typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-unordered_map<KeyType, MappedType, Hash>::GetAllDataInServer() {
+unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::GetAllDataInServer() {
     if (is_local()) {
         return LocalGetAllDataInServer();
     }
@@ -201,30 +202,30 @@ unordered_map<KeyType, MappedType, Hash>::GetAllDataInServer() {
 
 
 
-template<typename KeyType, typename MappedType, typename Hash>
-void unordered_map<KeyType, MappedType, Hash>::open_shared_memory() {
+template<typename KeyType, typename MappedType, typename Hash, typename Allocator ,typename SharedType>
+void unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::open_shared_memory() {
     std::pair<MyHashMap *, boost::interprocess::managed_mapped_file::size_type> res;
     res = segment.find<MyHashMap>(name.c_str());
     myHashMap = res.first;
 }
 
-template<typename KeyType, typename MappedType, typename Hash>
-void unordered_map<KeyType, MappedType, Hash>::bind_functions() {
+template<typename KeyType, typename MappedType, typename Hash, typename Allocator ,typename SharedType>
+void unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::bind_functions() {
     switch (HCL_CONF->RPC_IMPLEMENTATION) {
 #ifdef HCL_ENABLE_RPCLIB
         case RPCLIB: {
             std::function<bool(KeyType &, MappedType &)> putFunc(
-                    std::bind(&unordered_map<KeyType, MappedType, Hash>::LocalPut, this,
+                    std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalPut, this,
                               std::placeholders::_1, std::placeholders::_2));
             std::function<std::pair<bool, MappedType>(KeyType &)> getFunc(
-                    std::bind(&unordered_map<KeyType, MappedType, Hash>::LocalGet, this,
+                    std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalGet, this,
                               std::placeholders::_1));
             std::function<std::pair<bool, MappedType>(KeyType &)> eraseFunc(
-                    std::bind(&unordered_map<KeyType, MappedType, Hash>::LocalErase, this,
+                    std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalErase, this,
                               std::placeholders::_1));
             std::function<std::vector<std::pair<KeyType, MappedType>>(void)>
                     getAllDataInServerFunc(std::bind(
-                    &unordered_map<KeyType, MappedType, Hash>::LocalGetAllDataInServer,
+                    &unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::LocalGetAllDataInServer,
                     this));
             rpc->bind(func_prefix+"_Put", putFunc);
             rpc->bind(func_prefix+"_Get", getFunc);
@@ -243,22 +244,22 @@ void unordered_map<KeyType, MappedType, Hash>::bind_functions() {
             {
 
      std::function<void(const tl::request &, KeyType &, MappedType &)> putFunc(
-            std::bind(&unordered_map<KeyType, MappedType, Hash>::ThalliumLocalPut, this,
+            std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::ThalliumLocalPut, this,
                       std::placeholders::_1, std::placeholders::_2,
                       std::placeholders::_3));
         // std::function<void(const tl::request &, tl::bulk &, KeyType &)> putFunc(
-        //     std::bind(&unordered_map<KeyType, MappedType, Hash>::ThalliumLocalPut, this,
+        //     std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::ThalliumLocalPut, this,
         //               std::placeholders::_1, std::placeholders::_2,
         //               std::placeholders::_3));
         std::function<void(const tl::request &, KeyType &)> getFunc(
-            std::bind(&unordered_map<KeyType, MappedType, Hash>::ThalliumLocalGet, this,
+            std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::ThalliumLocalGet, this,
                       std::placeholders::_1, std::placeholders::_2));
         std::function<void(const tl::request &, KeyType &)> eraseFunc(
-            std::bind(&unordered_map<KeyType, MappedType, Hash>::ThalliumLocalErase, this,
+            std::bind(&unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::ThalliumLocalErase, this,
                       std::placeholders::_1, std::placeholders::_2));
         std::function<void(const tl::request &)>
                 getAllDataInServerFunc(std::bind(
-                    &unordered_map<KeyType, MappedType, Hash>::ThalliumLocalGetAllDataInServer,
+                    &unordered_map<KeyType, MappedType, Hash, Allocator, SharedType>::ThalliumLocalGetAllDataInServer,
                     this, std::placeholders::_1));
 
         rpc->bind(func_prefix+"_Put", putFunc);
