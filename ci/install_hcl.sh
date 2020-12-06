@@ -16,7 +16,7 @@ BOOST_SPEC="boost@${BOOST_VERSION}%${GCC_SPEC}"
 
 LOCAL=local
 INSTALL_DIR="${HOME}/${LOCAL}/install"
-SPACK_DIR=${INSTALL_DIR}/spack
+SPACK_DIR=${HOME}/${LOCAL}/spack
 rm -r ${INSTALL_DIR}
 mkdir -p ${INSTALL_DIR}
 
