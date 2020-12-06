@@ -31,7 +31,7 @@ else
   . ${SPACK_DIR}/share/spack/setup-env.sh
   set -x
  
-  if [ ! -d ${SPACK_DIR}/var/spack/environments/hcl ]
+  if [ -d ${SPACK_DIR}/var/spack/environments/hcl ]
   then
   spack env deactivate hcl
   spack env remove -y hcl
