@@ -12,7 +12,7 @@ MERCURY_VERSION=2.0.0
 MPICH_VERSION=3.2.1
 RPCLIB_VERSION=2.2.1
 BOOST_VERSION=1.74.0
-GCC_VERSION=9.3.0
+GCC_VERSION=8.3.0
 
 echo "Installing dependencies at ${INSTALL_DIR}"
 if [ ! -d ${INSTALL_DIR} ] 
@@ -44,6 +44,10 @@ set +x
 spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
 
 GCC_SPEC="gcc@${GCC_VERSION}"
+spack install -y ${GCC_SPEC}
+
+spack compiler find
+
 GCC_SPEC="${GCC_SPEC}%${GCC_SPEC}"
 spack install -y ${GCC_SPEC}
 
