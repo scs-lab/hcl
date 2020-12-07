@@ -24,6 +24,8 @@ set +x
 . ${SPACK_DIR}/share/spack/setup-env.sh
 set -x
 
+spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
+
 spack view symlink ${INSTALL_DIR} ${GCC_SPEC} ${MPICH_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 
 
@@ -40,8 +42,8 @@ cmake                                                      \
     -DCMAKE_BUILD_RPATH="${INSTALL_DIR}/lib"                     \
     -DCMAKE_INSTALL_RPATH="${INSTALL_DIR}/lib"                   \
     -DCMAKE_BUILD_TYPE=Release                             \
-    -DCMAKE_CXX_COMPILER=`which mpicxx`                    \
-    -DCMAKE_C_COMPILER=`which mpicc`                       \
+    -DCMAKE_CXX_COMPILER=${INSTALL_DIR}/bin/g++                    \
+    -DCMAKE_C_COMPILER=${INSTALL_DIR}/bin/gcc                      \
     -DHCL_ENABLE_RPCLIB=${HCL_ENABLE_RPCLIB}               \
     -DHCL_ENABLE_THALLIUM_TCP=${HCL_ENABLE_THALLIUM_TCP}   \
     -DHCL_ENABLE_THALLIUM_ROCE=${HCL_ENABLE_THALLIUM_ROCE} \
