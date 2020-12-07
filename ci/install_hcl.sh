@@ -26,11 +26,11 @@ set -x
 
 spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
 
-spack view symlink --verbose -i ${INSTALL_DIR} ${GCC_SPEC} 
-spack view symlink --verbose -i ${INSTALL_DIR} ${MPICH_SPEC} 
-spack view symlink --verbose -i ${INSTALL_DIR} ${THALLIUM_SPEC} 
-spack view symlink --verbose -i ${INSTALL_DIR} ${RPCLIB_SPEC} 
-spack view symlink --verbose -i ${INSTALL_DIR} ${BOOST_SPEC}
+spack view --verbose symlink -i ${INSTALL_DIR} ${GCC_SPEC} 
+spack view --verbose symlink -i ${INSTALL_DIR} ${MPICH_SPEC} 
+spack view --verbose symlink -i ${INSTALL_DIR} ${THALLIUM_SPEC} 
+spack view --verbose symlink -i ${INSTALL_DIR} ${RPCLIB_SPEC} 
+spack view --verbose symlink -i ${INSTALL_DIR} ${BOOST_SPEC}
 
 
 mkdir build
