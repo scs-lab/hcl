@@ -44,6 +44,10 @@ set +x
 spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
 
 GCC_SPEC="gcc@${GCC_VERSION}"
+spack install -y ${GCC_SPEC}
+
+spack compiler find
+
 GCC_SPEC="${GCC_SPEC}%${GCC_SPEC}"
 spack install -y ${GCC_SPEC}
 
