@@ -133,13 +133,16 @@ int main (int argc,char* argv[])
     HCL_CONF->SERVER_ON_NODE = server_on_node || is_server;
     HCL_CONF->SERVER_LIST_PATH = "./server_list";
 
-    hcl::unordered_map<KeyType,std::string> *map;
+    typedef boost::interprocess::allocator<char, boost::interprocess::managed_mapped_file::segment_manager> CharAllocator;
+    typedef bip::basic_string<char, std::char_traits<char>, CharAllocator> MappedUnitString;
+
+    hcl::unordered_map<KeyType, std::string, std::hash<KeyType>,CharAllocator, MappedUnitString> *map;
     if (is_server) {
-        map = new hcl::unordered_map<KeyType,std::string>();
+        map = new hcl::unordered_map<KeyType,std::string,std::hash<KeyType>,CharAllocator, MappedUnitString>();
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (!is_server) {
-        map = new hcl::unordered_map<KeyType,std::string>();
+        map = new hcl::unordered_map<KeyType,std::string,std::hash<KeyType>,CharAllocator, MappedUnitString>();
     }
 
     std::unordered_map<KeyType,std::string> lmap=std::unordered_map<KeyType,std::string>();
