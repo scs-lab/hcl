@@ -57,13 +57,14 @@ struct KeyType{
     bool Contains(const KeyType &o) const {
         return a==o.a;
     }
-#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
-    template<typename A>
-    void serialize(A& ar) const {
-        ar & a;
-    }
-#endif
+
 };
+#if defined(HCL_ENABLE_THALLIUM_TCP) || defined(HCL_ENABLE_THALLIUM_ROCE)
+template<typename A>
+void serialize(A &ar, KeyType &a) {
+    ar & a.a;
+}
+#endif
 namespace std {
     template<>
     struct hash<KeyType> {
@@ -87,7 +88,7 @@ int main (int argc,char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
     int ranks_per_server=comm_size,num_request=10000;
     long size_of_request=1000;
-    bool debug=false;
+    bool debug=true;
     bool server_on_node=false;
     if(argc > 1)    ranks_per_server = atoi(argv[1]);
     if(argc > 2)    num_request = atoi(argv[2]);
@@ -95,10 +96,6 @@ int main (int argc,char* argv[])
     if(argc > 4)    server_on_node = (bool)atoi(argv[4]);
     if(argc > 5)    debug = (bool)atoi(argv[5]);
 
-    /* if(comm_size/ranks_per_server < 2){
-         perror("comm_size/ranks_per_server should be atleast 2 for this test\n");
-         exit(-1);
-     }*/
     int len;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     MPI_Get_processor_name(processor_name, &len);
@@ -155,11 +152,18 @@ int main (int argc,char* argv[])
     std::unordered_map<KeyType,std::array<int, array_size>> lmap=std::unordered_map<KeyType,std::array<int, array_size>>();
 
     MPI_Comm client_comm;
-    MPI_Comm_split(MPI_COMM_WORLD, !is_server, my_rank, &client_comm);
-    int client_comm_size;
-    MPI_Comm_size(client_comm, &client_comm_size);
+    bool is_client = true;
+    int client_comm_size = 1;
+    if(comm_size > 1){
+        MPI_Comm_split(MPI_COMM_WORLD, !is_server, my_rank, &client_comm);
+        MPI_Comm_size(client_comm, &client_comm_size);
+        is_client = !is_server;
+    }else{
+        client_comm=MPI_COMM_WORLD;
+    }
+
     MPI_Barrier(MPI_COMM_WORLD);
-    if (!is_server) {
+    if (is_client) {
         Timer llocal_map_timer=Timer();
         std::hash<KeyType> keyHash;
         /*Local std::map test*/
@@ -235,7 +239,7 @@ int main (int argc,char* argv[])
         }
 
         MPI_Barrier(client_comm);
-
+        map->server_on_node=false;
         Timer remote_map_timer=Timer();
         /*Remote map test*/
         for(int i=0;i<num_request;i++){

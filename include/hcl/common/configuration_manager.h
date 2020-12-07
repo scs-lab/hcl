@@ -73,7 +73,7 @@ namespace hcl{
 #elif defined(HCL_ENABLE_THALLIUM_ROCE)
         RPC_IMPLEMENTATION(THALLIUM_ROCE),
 #endif
-              TCP_CONF("tcp"), VERBS_CONF("verbs"), VERBS_DOMAIN("mlx5_0"),
+              TCP_CONF("ofi+sockets"), VERBS_CONF("verbs"), VERBS_DOMAIN("mlx5_0"),
               IS_SERVER(false), MY_SERVER(0), NUM_SERVERS(1),
               SERVER_ON_NODE(true), SERVER_LIST_PATH("./server_list"), DYN_CONFIG(false) {
           AutoTrace trace = AutoTrace("ConfigurationManager");

@@ -22,9 +22,9 @@ namespace hcl{
         boost::interprocess::managed_mapped_file segment;
         CharStruct name, func_prefix;
         boost::interprocess::interprocess_mutex* mutex;
-        bool server_on_node;
         CharStruct backed_file;
     public:
+        bool server_on_node;
         virtual void construct_shared_memory() = 0;
         virtual void open_shared_memory() = 0;
         virtual void bind_functions() = 0;
