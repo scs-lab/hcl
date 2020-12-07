@@ -44,6 +44,7 @@ set +x
 spack repo add ${SPACK_DIR}/var/spack/repos/sds-repo
 
 GCC_SPEC="gcc@${GCC_VERSION}"
+GCC_SPEC="${GCC_SPEC}%${GCC_SPEC}"
 spack install -y ${GCC_SPEC}
 
 MPICH_SPEC="mpich@${MPICH_VERSION}%${GCC_SPEC}"
