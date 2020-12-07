@@ -24,15 +24,17 @@ set +x
 . ${SPACK_DIR}/share/spack/setup-env.sh
 set -x
 
-spack uninstall mercury@2.0.0rc1
+spack view symlink ${INSTALL_DIR} ${GCC_SPEC} ${MPICH_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 
-spack view symlink ${INSTALL_DIR} ${GCC_SPEC} ${MPICH_SPEC} ${MERCURY_SPEC} ${THALLIUM_SPEC} ${RPCLIB_SPEC} ${BOOST_SPEC}
 
 mkdir build
 pushd build
 
 CXXFLAGS="-I${INSTALL_DIR}/include -fsanitize=address -O1 -fno-omit-frame-pointer -g" \
 LDFLAGS="-L${INSTALL_DIR}/lib"                                       \
+CMAKE_C_COMPILER=${INSTALL_DIR}/bin/gcc                              \
+CMAKE_CXX_COMPILER=${INSTALL_DIR}/bin/g++
+
 cmake                                                      \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}                        \
     -DCMAKE_BUILD_RPATH="${INSTALL_DIR}/lib"                     \
