@@ -1,9 +1,5 @@
 #!/bin/bash
 
-LOCAL=local
-INSTALL_DIR="${HOME}/${LOCAL}"
-SPACK_DIR=${INSTALL_DIR}/spack
-INSTALL_DIR=${SPACK_DIR}/var/spack/environments/hcl/.spack-env/view
 mkdir build
 pushd build
 
