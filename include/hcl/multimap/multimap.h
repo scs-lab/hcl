@@ -67,7 +67,7 @@ namespace hcl {
  * @tparam MappedType, the value of the MultiMap
  */
 template<typename KeyType, typename MappedType, typename Compare =
-         std::less<KeyType>>
+         std::less<KeyType>, class Allocator=nullptr_t ,class SharedType=nullptr_t>
 class multimap:public container {
   private:
     /** Class Typedefs for ease of use **/

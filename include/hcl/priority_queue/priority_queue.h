@@ -72,7 +72,7 @@ namespace hcl {
  *
  * @tparam MappedType, the value of the priority_queue
  */
-template<typename MappedType, typename Compare = std::less<MappedType>>
+template<typename MappedType, typename Compare = std::less<MappedType>, class Allocator=nullptr_t ,class SharedType=nullptr_t>
 class priority_queue:public container {
   private:
     /** Class Typedefs for ease of use **/

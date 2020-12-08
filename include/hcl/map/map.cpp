@@ -29,12 +29,13 @@
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType, typename Compare>
-bool map<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool map<KeyType, MappedType, Compare, Allocator , SharedType>::LocalPut(KeyType &key,
                                                  MappedType &data) {
     AutoTrace trace = AutoTrace("hcl::map::Put(local)", key, data);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
-    mymap->insert_or_assign(key, data);
+    auto value = GetData<Allocator, MappedType, SharedType>(data);
+    mymap->insert_or_assign(key, value);
     return true;
 }
 
@@ -44,8 +45,8 @@ bool map<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType, typename Compare>
-bool map<KeyType, MappedType, Compare>::Put(KeyType &key,
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool map<KeyType, MappedType, Compare, Allocator , SharedType>::Put(KeyType &key,
                                             MappedType &data) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
@@ -64,9 +65,9 @@ bool map<KeyType, MappedType, Compare>::Put(KeyType &key,
  * @return return a pair of bool and Value. If bool is true then
  * data was found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-map<KeyType, MappedType, Compare>::LocalGet(KeyType &key) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGet(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::map::Get(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
@@ -84,9 +85,9 @@ map<KeyType, MappedType, Compare>::LocalGet(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then
  * data was found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-map<KeyType, MappedType, Compare>::Get(KeyType &key) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -99,9 +100,9 @@ map<KeyType, MappedType, Compare>::Get(KeyType &key) {
     }
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-map<KeyType, MappedType, Compare>::LocalErase(KeyType &key) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::LocalErase(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::map::Erase(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
@@ -109,9 +110,9 @@ map<KeyType, MappedType, Compare>::LocalErase(KeyType &key) {
     return std::pair<bool, MappedType>(s > 0, MappedType());
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-map<KeyType, MappedType, Compare>::Erase(KeyType &key) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -129,9 +130,9 @@ map<KeyType, MappedType, Compare>::Erase(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::Contains(KeyType &key_start,KeyType &key_end) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::Contains(KeyType &key_start,KeyType &key_end) {
     AutoTrace trace = AutoTrace("hcl::map::Contains", key_start,key_end);
     auto final_values = std::vector<std::pair<KeyType, MappedType>>();
     auto current_server = ContainsInServer(key_start,key_end);
@@ -146,9 +147,9 @@ map<KeyType, MappedType, Compare>::Contains(KeyType &key_start,KeyType &key_end)
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::GetAllData() {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::GetAllData() {
     AutoTrace trace = AutoTrace("hcl::map::GetAllData");
     auto final_values = std::vector<std::pair<KeyType, MappedType>>();
     auto current_server = GetAllDataInServer();
@@ -163,9 +164,9 @@ map<KeyType, MappedType, Compare>::GetAllData() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::LocalContainsInServer(KeyType &key_start,KeyType &key_end) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::LocalContainsInServer(KeyType &key_start,KeyType &key_end) {
     AutoTrace trace = AutoTrace("hcl::map::ContainsInServer", key_start,key_end);
     auto final_values = std::vector<std::pair<KeyType, MappedType>>();
     {
@@ -195,9 +196,9 @@ map<KeyType, MappedType, Compare>::LocalContainsInServer(KeyType &key_start,KeyT
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::ContainsInServer(KeyType &key_start,KeyType &key_end) {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::ContainsInServer(KeyType &key_start,KeyType &key_end) {
     if (is_local()) {
         return LocalContainsInServer(key_start,key_end);
     }
@@ -208,9 +209,9 @@ map<KeyType, MappedType, Compare>::ContainsInServer(KeyType &key_start,KeyType &
     }
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGetAllDataInServer() {
     AutoTrace trace = AutoTrace("hcl::map::GetAllDataInServer", NULL);
     auto final_values = std::vector<std::pair<KeyType, MappedType>>();
     {
@@ -226,9 +227,9 @@ map<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-map<KeyType, MappedType, Compare>::GetAllDataInServer() {
+map<KeyType, MappedType, Compare, Allocator , SharedType>::GetAllDataInServer() {
     if (is_local()) {
         return LocalGetAllDataInServer();
     }

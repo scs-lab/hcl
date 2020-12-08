@@ -70,7 +70,7 @@ namespace hcl {
  *
  * @tparam MappedType, the value of the Queue
  */
-template<typename MappedType>
+template<typename MappedType, class Allocator=nullptr_t ,class SharedType=nullptr_t>
 class queue :public container{
   private:
     /** Class Typedefs for ease of use **/

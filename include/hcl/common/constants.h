@@ -27,7 +27,7 @@
 
 const uint16_t RPC_PORT = 8080;
 const uint16_t RPC_THREADS = 1;
-const int TEST_REQUEST_SIZE = 1000;
+const int TEST_REQUEST_SIZE = 1024;
 const CharStruct PATH_SEPARATOR = "/";
 
 #endif  // INCLUDE_HCL_COMMON_CONSTANTS_H_

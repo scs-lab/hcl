@@ -183,7 +183,7 @@ private:
 #endif
 #ifdef HCL_ENABLE_THALLIUM_ROCE
       case THALLIUM_ROCE: {
-	  engine_init_str = HCL_CONF->VERBS_CONF + "://" +
+	  engine_init_str = HCL_CONF->VERBS_CONF + ";" +
 	    HCL_CONF->VERBS_DOMAIN + "://" +
 	    HCL_CONF->SERVER_LIST[HCL_CONF->MY_SERVER] +
 	    ":" +

@@ -71,7 +71,7 @@ namespace hcl {
  */
 
 template<typename KeyType, typename Hash = std::hash<KeyType>, typename Compare =
-         std::less<KeyType>>
+         std::less<KeyType>, class Allocator=nullptr_t ,class SharedType=nullptr_t>
 class set :public container {
   private:
     /** Class Typedefs for ease of use **/

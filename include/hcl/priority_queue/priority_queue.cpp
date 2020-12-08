@@ -24,13 +24,13 @@
 #define INCLUDE_HCL_PRIORITY_QUEUE_PRIORITY_QUEUE_CPP_
 
 /* Constructor to deallocate the shared memory*/
-template<typename MappedType, typename Compare>
-priority_queue<MappedType, Compare>::~priority_queue() {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+priority_queue<MappedType, Compare, Allocator , SharedType>::~priority_queue() {
     this->container::~container();
 }
 
-template<typename MappedType, typename Compare>
-priority_queue<MappedType,Compare>::priority_queue(CharStruct name_, uint16_t port):container(name_,port),queue(){
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+priority_queue<MappedType, Compare, Allocator , SharedType>::priority_queue(CharStruct name_, uint16_t port):container(name_,port),queue(){
     AutoTrace trace = AutoTrace("hcl::priority_queue");
     if (is_server) {
         construct_shared_memory();
@@ -46,12 +46,12 @@ priority_queue<MappedType,Compare>::priority_queue(CharStruct name_, uint16_t po
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename MappedType, typename Compare>
-bool priority_queue<MappedType, Compare>::LocalPush(MappedType &data) {
-    AutoTrace trace = AutoTrace("hcl::priority_queue::Push(local)",
-                                data);
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool priority_queue<MappedType, Compare, Allocator , SharedType>::LocalPush(MappedType &data) {
+    AutoTrace trace = AutoTrace("hcl::priority_queue::Push(local)", data);
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
-    queue->push(data);
+    auto value = GetData<Allocator, MappedType, SharedType>(data);
+    queue->push(value);
     return true;
 }
 
@@ -62,8 +62,8 @@ bool priority_queue<MappedType, Compare>::LocalPush(MappedType &data) {
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename MappedType, typename Compare>
-bool priority_queue<MappedType, Compare>::Push(MappedType &data,
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool priority_queue<MappedType, Compare, Allocator , SharedType>::Push(MappedType &data,
                                                uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalPush(data);
@@ -81,9 +81,9 @@ bool priority_queue<MappedType, Compare>::Push(MappedType &data,
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename MappedType, typename Compare>
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-priority_queue<MappedType, Compare>::LocalPop() {
+priority_queue<MappedType, Compare, Allocator , SharedType>::LocalPop() {
     AutoTrace trace = AutoTrace("hcl::priority_queue::Pop(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     if (queue->size() > 0) {
@@ -101,9 +101,9 @@ priority_queue<MappedType, Compare>::LocalPop() {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename MappedType, typename Compare>
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-priority_queue<MappedType, Compare>::Pop(uint16_t &key_int) {
+priority_queue<MappedType, Compare, Allocator , SharedType>::Pop(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalPop();
     } else {
@@ -120,9 +120,9 @@ priority_queue<MappedType, Compare>::Pop(uint16_t &key_int) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename MappedType, typename Compare>
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-priority_queue<MappedType, Compare>::LocalTop() {
+priority_queue<MappedType, Compare, Allocator , SharedType>::LocalTop() {
     AutoTrace trace = AutoTrace("hcl::priority_queue::Top(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     if (queue->size() > 0) {
@@ -139,9 +139,9 @@ priority_queue<MappedType, Compare>::LocalTop() {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename MappedType, typename Compare>
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-priority_queue<MappedType, Compare>::Top(uint16_t &key_int) {
+priority_queue<MappedType, Compare, Allocator , SharedType>::Top(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalTop();
     } else {
@@ -157,8 +157,8 @@ priority_queue<MappedType, Compare>::Top(uint16_t &key_int) {
  * @param key_int, key_int to know which server
  * @return return a size of the priority queue
  */
-template<typename MappedType, typename Compare>
-size_t priority_queue<MappedType, Compare>::LocalSize() {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+size_t priority_queue<MappedType, Compare, Allocator , SharedType>::LocalSize() {
     AutoTrace trace = AutoTrace("hcl::priority_queue::Size(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     size_t value = queue->size();
@@ -171,8 +171,8 @@ size_t priority_queue<MappedType, Compare>::LocalSize() {
  * @param key_int, key_int to know which server
  * @return return a size of the priority queue
  */
-template<typename MappedType, typename Compare>
-size_t priority_queue<MappedType, Compare>::Size(uint16_t &key_int) {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+size_t priority_queue<MappedType, Compare, Allocator , SharedType>::Size(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalSize();
     } else {
@@ -182,22 +182,22 @@ size_t priority_queue<MappedType, Compare>::Size(uint16_t &key_int) {
     }
 }
 
-template<typename MappedType, typename Compare>
-void priority_queue<MappedType, Compare>::construct_shared_memory() {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void priority_queue<MappedType, Compare, Allocator , SharedType>::construct_shared_memory() {
     ShmemAllocator alloc_inst(segment.get_segment_manager());
     /* Construct priority queue in the shared memory space. */
     queue = segment.construct<Queue>("Queue")(Compare(), alloc_inst);
 }
 
-template<typename MappedType, typename Compare>
-void priority_queue<MappedType, Compare>::open_shared_memory() {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void priority_queue<MappedType, Compare, Allocator , SharedType>::open_shared_memory() {
     std::pair<Queue*, bip::managed_mapped_file::size_type> res;
     res = segment.find<Queue> ("Queue");
     queue = res.first;
 }
 
-template<typename MappedType, typename Compare>
-void priority_queue<MappedType, Compare>::bind_functions() {
+template<typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void priority_queue<MappedType, Compare, Allocator , SharedType>::bind_functions() {
     /* Create a RPC server and map the methods to it. */
     switch (HCL_CONF->RPC_IMPLEMENTATION) {
 #ifdef HCL_ENABLE_RPCLIB
