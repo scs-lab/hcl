@@ -17,18 +17,20 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    container:
+      image: hdevarajan92/hcl:gcc8
     strategy:
       matrix:
         include:
           - RPCLIB: ON
             THALLIUM_TCP: OFF
             THALLIUM_ROCE: OFF
-#          - RPCLIB: OFF
-#            THALLIUM_TCP: ON
-#            THALLIUM_ROCE: OFF
-#          - RPCLIB: OFF
-#            THALLIUM_TCP: OFF
-#            THALLIUM_ROCE: ON
+          - RPCLIB: OFF
+            THALLIUM_TCP: ON
+            THALLIUM_ROCE: OFF
+          - RPCLIB: OFF
+            THALLIUM_TCP: OFF
+            THALLIUM_ROCE: ON
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -39,36 +41,42 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v1
 
-      - name: Cache Spack packages
-        uses: actions/cache@v2
-        id: spack-cache
-        with:
-          path: ~/${{ env.LOCAL }}
-          key: ${{ runner.os }}-${{ hashFiles('ci/install_deps.sh') }}
-          #restore-keys: |
-          #  ${{ runner.os }}-  
+      - uses: satackey/action-docker-layer-caching@v0.0.10
+          # Ignore the failure of a step and avoid terminating the job.
+          continue-on-error: true
+          with:
+            key: hcl-docker-image-{hash}
 
-      - name: Install APT Dependencies
-        run: |
-          sudo apt update
-          sudo apt-get install -y autoconf
-          sudo apt-get install -y automake
-          sudo apt-get install -y zlib1g-dev
-          sudo apt-get install -y libsdl2-dev
+#      - name: Cache Spack packages
+#        uses: actions/cache@v2
+#        id: spack-cache
+#        with:
+#          path: ~/${{ env.LOCAL }}
+#          key: ${{ runner.os }}-${{ hashFiles('ci/install_deps.sh') }}
+#          #restore-keys: |
+#          #  ${{ runner.os }}-
 
-      - name: Build And Install Dependencies
-        if: steps.spack-cache.outputs.cache-hit != 'true'
-        run: ci/install_deps.sh
+#      - name: Install APT Dependencies
+#        run: |
+#          sudo apt update
+#          sudo apt-get install -y autoconf
+#          sudo apt-get install -y automake
+#          sudo apt-get install -y zlib1g-dev
+#          sudo apt-get install -y libsdl2-dev
 
-#       - name: Build
-#         env:
-#           HCL_ENABLE_RPCLIB: ${{ matrix.RPCLIB }}
-#           HCL_ENABLE_THALLIUM_TCP: ${{ matrix.THALLIUM_TCP }}
-#           HCL_ENABLE_THALLIUM_ROCE: ${{ matrix.THALLIUM_ROCE }}
-#         run: ci/install_hcl.sh
-#      - name: Test
-#        env:
-#          HCL_ENABLE_RPCLIB: ${{ matrix.RPCLIB }}
-#          HCL_ENABLE_THALLIUM_TCP: ${{ matrix.THALLIUM_TCP }}
-#          HCL_ENABLE_THALLIUM_ROCE: ${{ matrix.THALLIUM_ROCE }}
-#        run: ci/run_hcl.sh
+#      - name: Build And Install Dependencies
+#        if: steps.spack-cache.outputs.cache-hit != 'true'
+#        run: ci/install_deps.sh
+
+       - name: Build
+         env:
+           HCL_ENABLE_RPCLIB: ${{ matrix.RPCLIB }}
+           HCL_ENABLE_THALLIUM_TCP: ${{ matrix.THALLIUM_TCP }}
+           HCL_ENABLE_THALLIUM_ROCE: ${{ matrix.THALLIUM_ROCE }}
+         run: ci/install_hcl.sh
+      - name: Test
+        env:
+          HCL_ENABLE_RPCLIB: ${{ matrix.RPCLIB }}
+          HCL_ENABLE_THALLIUM_TCP: ${{ matrix.THALLIUM_TCP }}
+          HCL_ENABLE_THALLIUM_ROCE: ${{ matrix.THALLIUM_ROCE }}
+        run: ci/run_hcl.sh

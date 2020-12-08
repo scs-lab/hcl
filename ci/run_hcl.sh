@@ -21,12 +21,10 @@ if [ "${HCL_ENABLE_RPCLIB}" = "ON" ]; then
     echo "Testing set"
     mpiexec -n 2 ./set_test || exit 1
     echo "Testing unordered map test"
-    mpiexec -n 2 ./unordered_map_test || exit
+    mpiexec -n 2 ./unordered_map_test || exit 1
     echo "Testing unordered map string test"
-    mpiexec -n 2 ./unordered_map_string_test || exit
+    mpiexec -n 2 ./unordered_map_string_test || exit 1
     popd
-
-    make install || exit 1
 fi
 
 if [ "${HCL_ENABLE_THALLIUM_TCP}" = "ON" ]; then
@@ -43,11 +41,9 @@ if [ "${HCL_ENABLE_THALLIUM_TCP}" = "ON" ]; then
     echo "Testing set"
     mpiexec -n 2 ./set_test || exit 1
     echo "Testing unordered map test"
-    mpiexec -n 2 ./unordered_map_test || exit
+    mpiexec -n 2 ./unordered_map_test || exit 1
     echo "Testing unordered map string test"
-    mpiexec -n 2 ./unordered_map_string_test || exit
+    mpiexec -n 2 ./unordered_map_string_test || exit 1
     popd
-
-    make install || exit 1
 fi
 popd
