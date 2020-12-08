@@ -11,7 +11,7 @@ LDFLAGS="-L${INSTALL_DIR}/lib"                                       \
 CMAKE_C_COMPILER=${INSTALL_DIR}/bin/gcc                              \
 CMAKE_CXX_COMPILER=${INSTALL_DIR}/bin/g++
 
-cmake                                                      \
+${INSTALL_DIR}/bin/cmake                                                      \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}                        \
     -DCMAKE_BUILD_RPATH="${INSTALL_DIR}/lib"                     \
     -DCMAKE_INSTALL_RPATH="${INSTALL_DIR}/lib"                   \
