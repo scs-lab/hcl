@@ -50,7 +50,7 @@ template<typename KeyType,  typename Hash, typename Compare, typename Allocator 
 bool set<KeyType, Hash, Compare, Allocator , SharedType>::LocalPut(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::set::Put(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
-    auto value = GetData<Allocator, MappedType, SharedType>(key);
+    auto value = GetData<Allocator, KeyType, SharedType>(key);
     myset->insert(value);
 
     return true;
