@@ -24,6 +24,6 @@ ${INSTALL_DIR}/bin/cmake                                                      \
     -DBUILD_TEST=ON                                        \
     ..
 
-cmake --build . -- -j 2 VERBOSE=1 || exit 1
+${INSTALL_DIR}/bin/cmake --build . -- -j 2 VERBOSE=1 || exit 1
 
 popd
