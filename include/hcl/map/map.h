@@ -73,7 +73,7 @@ namespace hcl {
  *
  * @tparam MappedType, the value of the Map
  */
-    template<typename KeyType, typename MappedType, typename Compare = std::less<KeyType>>
+    template<typename KeyType, typename MappedType, typename Compare = std::less<KeyType>, class Allocator=nullptr_t ,class SharedType=nullptr_t>
     class map : public container {
     private:
         /** Class Typedefs for ease of use **/

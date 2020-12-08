@@ -24,13 +24,13 @@
 #define INCLUDE_HCL_SET_SET_CPP_
 
 /* Constructor to deallocate the shared memory*/
-template<typename KeyType,  typename Hash, typename Compare>
-set<KeyType, Hash, Compare>::~set() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+set<KeyType, Hash, Compare, Allocator , SharedType>::~set() {
     this->container::~container();
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-set<KeyType, Hash, Compare>::set(CharStruct name_, uint16_t port): container(name_, port), myset() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+set<KeyType, Hash, Compare, Allocator , SharedType>::set(CharStruct name_, uint16_t port): container(name_, port), myset() {
     AutoTrace trace = AutoTrace("hcl::set");
     if (is_server) {
         construct_shared_memory();
@@ -46,11 +46,12 @@ set<KeyType, Hash, Compare>::set(CharStruct name_, uint16_t port): container(nam
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType,  typename Hash, typename Compare>
-bool set<KeyType, Hash, Compare>::LocalPut(KeyType &key) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+bool set<KeyType, Hash, Compare, Allocator , SharedType>::LocalPut(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::set::Put(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
-    myset->insert(key);
+    auto value = GetData<Allocator, MappedType, SharedType>(key);
+    myset->insert(value);
 
     return true;
 }
@@ -61,8 +62,8 @@ bool set<KeyType, Hash, Compare>::LocalPut(KeyType &key) {
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType,  typename Hash, typename Compare>
-bool set<KeyType, Hash, Compare>::Put(KeyType &key) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+bool set<KeyType, Hash, Compare, Allocator , SharedType>::Put(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
     if (is_local(key_int)) {
@@ -79,8 +80,8 @@ bool set<KeyType, Hash, Compare>::Put(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then
  * data was found and is present in value part else bool is set to false
  */
-template<typename KeyType,  typename Hash, typename Compare>
-bool set<KeyType, Hash, Compare>::LocalGet(KeyType &key) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+bool set<KeyType, Hash, Compare, Allocator , SharedType>::LocalGet(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::set::Get(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
@@ -98,8 +99,8 @@ bool set<KeyType, Hash, Compare>::LocalGet(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then
  * data was found and is present in value part else bool is set to false
  */
-template<typename KeyType,  typename Hash, typename Compare>
-bool set<KeyType, Hash, Compare>::Get(KeyType &key) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+bool set<KeyType, Hash, Compare, Allocator , SharedType>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -111,8 +112,8 @@ bool set<KeyType, Hash, Compare>::Get(KeyType &key) {
     }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-bool set<KeyType, Hash, Compare>::LocalErase(KeyType &key) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+bool set<KeyType, Hash, Compare, Allocator , SharedType>::LocalErase(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::set::Erase(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*mutex);
     size_t s = myset->erase(key);
@@ -120,9 +121,9 @@ bool set<KeyType, Hash, Compare>::LocalErase(KeyType &key) {
     return s > 0;
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
 bool
-set<KeyType, Hash, Compare>::Erase(KeyType &key) {
+set<KeyType, Hash, Compare, Allocator , SharedType>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -140,9 +141,9 @@ set<KeyType, Hash, Compare>::Erase(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType,  typename Hash, typename Compare>
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
 std::vector<KeyType>
-set<KeyType, Hash, Compare>::Contains(KeyType &key_start, KeyType &key_end) {
+set<KeyType, Hash, Compare, Allocator , SharedType>::Contains(KeyType &key_start, KeyType &key_end) {
     AutoTrace trace = AutoTrace("hcl::set::Contains", key_start,key_end);
     std::vector<KeyType> final_values = std::vector<KeyType>();
     auto current_server = ContainsInServer(key_start,key_end);
@@ -157,8 +158,8 @@ set<KeyType, Hash, Compare>::Contains(KeyType &key_start, KeyType &key_end) {
     return final_values;
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::vector<KeyType> set<KeyType, Hash, Compare>::GetAllData() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::vector<KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::GetAllData() {
     AutoTrace trace = AutoTrace("hcl::set::GetAllData");
     std::vector<KeyType> final_values = std::vector<KeyType>();
     auto current_server = GetAllDataInServer();
@@ -173,8 +174,8 @@ std::vector<KeyType> set<KeyType, Hash, Compare>::GetAllData() {
     return final_values;
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::vector<KeyType> set<KeyType, Hash, Compare>::LocalContainsInServer(KeyType &key_start, KeyType &key_end) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::vector<KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::LocalContainsInServer(KeyType &key_start, KeyType &key_end) {
     AutoTrace trace = AutoTrace("hcl::set::ContainsInServer", key_start,key_end);
     std::vector<KeyType> final_values = std::vector<KeyType>();
     {
@@ -206,9 +207,9 @@ std::vector<KeyType> set<KeyType, Hash, Compare>::LocalContainsInServer(KeyType 
     return final_values;
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
 std::vector<KeyType>
-set<KeyType, Hash, Compare>::ContainsInServer(KeyType &key_start, KeyType &key_end) {
+set<KeyType, Hash, Compare, Allocator , SharedType>::ContainsInServer(KeyType &key_start, KeyType &key_end) {
     if (is_local()) {
         return LocalContainsInServer(key_start,key_end);
     }
@@ -219,8 +220,8 @@ set<KeyType, Hash, Compare>::ContainsInServer(KeyType &key_start, KeyType &key_e
     }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::vector<KeyType> set<KeyType, Hash, Compare>::LocalGetAllDataInServer() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::vector<KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::LocalGetAllDataInServer() {
     AutoTrace trace = AutoTrace("hcl::set::GetAllDataInServer", NULL);
     std::vector<KeyType> final_values = std::vector<KeyType>();
     {
@@ -236,9 +237,9 @@ std::vector<KeyType> set<KeyType, Hash, Compare>::LocalGetAllDataInServer() {
     return final_values;
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
 std::vector<KeyType>
-set<KeyType, Hash, Compare>::GetAllDataInServer() {
+set<KeyType, Hash, Compare, Allocator , SharedType>::GetAllDataInServer() {
     if (is_local()) {
         return LocalGetAllDataInServer();
     }
@@ -249,8 +250,8 @@ set<KeyType, Hash, Compare>::GetAllDataInServer() {
    }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalSeekFirst() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSeekFirst() {
     AutoTrace trace = AutoTrace("hcl::set::SeekFirst(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     if (myset->size() > 0) {
@@ -261,8 +262,8 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalSeekFirst() {
     return std::pair<bool, KeyType>(false, KeyType());
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, KeyType> set<KeyType, Hash, Compare>::SeekFirst(uint16_t &key_int) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::SeekFirst(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalSeekFirst();
     } else {
@@ -273,8 +274,8 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::SeekFirst(uint16_t &key_in
     }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::LocalSeekFirstN(uint32_t n){
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSeekFirstN(uint32_t n){
     AutoTrace trace = AutoTrace("hcl::set::LocalSeekFirstN(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     auto keys = std::vector<KeyType>();
@@ -288,8 +289,8 @@ std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::LocalSeekFirs
     return std::pair<bool, std::vector<KeyType>>(i>0, keys);
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::SeekFirstN(uint16_t &key_int,uint32_t n){
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare, Allocator , SharedType>::SeekFirstN(uint16_t &key_int,uint32_t n){
     if (is_local(key_int)) {
         return LocalSeekFirstN(n);
     } else {
@@ -299,8 +300,8 @@ std::pair<bool, std::vector<KeyType>> set<KeyType, Hash, Compare>::SeekFirstN(ui
     }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalPopFirst() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::LocalPopFirst() {
     AutoTrace trace = AutoTrace("hcl::set::PopFirst(local)");
     bip::scoped_lock<bip::interprocess_mutex> lock(*mutex);
     if (myset->size() > 0) {
@@ -312,8 +313,8 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::LocalPopFirst() {
     return std::pair<bool, KeyType>(false, KeyType());
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-std::pair<bool, KeyType> set<KeyType, Hash, Compare>::PopFirst(uint16_t &key_int) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+std::pair<bool, KeyType> set<KeyType, Hash, Compare, Allocator , SharedType>::PopFirst(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalPopFirst();
     } else {
@@ -324,14 +325,14 @@ std::pair<bool, KeyType> set<KeyType, Hash, Compare>::PopFirst(uint16_t &key_int
     }
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-size_t set<KeyType, Hash, Compare>::LocalSize() {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+size_t set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSize() {
     AutoTrace trace = AutoTrace("hcl::set::Size(local)");
     return myset->size();
 }
 
-template<typename KeyType,  typename Hash, typename Compare>
-size_t set<KeyType, Hash, Compare>::Size(uint16_t &key_int) {
+template<typename KeyType,  typename Hash, typename Compare, typename Allocator ,typename SharedType>
+size_t set<KeyType, Hash, Compare, Allocator , SharedType>::Size(uint16_t &key_int) {
     if (is_local(key_int)) {
         return LocalSize();
     } else {
@@ -341,52 +342,52 @@ size_t set<KeyType, Hash, Compare>::Size(uint16_t &key_int) {
     }
 }
 
-template<typename KeyType, typename Hash, typename Compare>
-void set<KeyType, Hash, Compare>::construct_shared_memory() {
+template<typename KeyType, typename Hash, typename Compare, typename Allocator ,typename SharedType>
+void set<KeyType, Hash, Compare, Allocator , SharedType>::construct_shared_memory() {
     ShmemAllocator alloc_inst(segment.get_segment_manager());
     /* Construct set in the shared memory space. */
     myset = segment.construct<MySet>(name.c_str())(Compare(), alloc_inst);
 }
 
-template<typename KeyType, typename Hash, typename Compare>
-void set<KeyType, Hash, Compare>::open_shared_memory() {
+template<typename KeyType, typename Hash, typename Compare, typename Allocator ,typename SharedType>
+void set<KeyType, Hash, Compare, Allocator , SharedType>::open_shared_memory() {
     std::pair<MySet*,
             boost::interprocess::managed_mapped_file::size_type> res;
     res = segment.find<MySet> (name.c_str());
     myset = res.first;
 }
 
-template<typename KeyType, typename Hash, typename Compare>
-void set<KeyType, Hash, Compare>::bind_functions() {
+template<typename KeyType, typename Hash, typename Compare, typename Allocator ,typename SharedType>
+void set<KeyType, Hash, Compare, Allocator , SharedType>::bind_functions() {
     /* Create a RPC server and map the methods to it. */
     switch (HCL_CONF->RPC_IMPLEMENTATION) {
 #ifdef HCL_ENABLE_RPCLIB
         case RPCLIB: {
             std::function<bool(KeyType &)> putFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalPut, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalPut, this,
                               std::placeholders::_1));
             std::function<bool(KeyType &)> getFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalGet, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalGet, this,
                               std::placeholders::_1));
             std::function<bool(KeyType &)> eraseFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalErase, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalErase, this,
                               std::placeholders::_1));
             std::function<std::vector<KeyType>(void)>
                     getAllDataInServerFunc(std::bind(
-                    &set<KeyType, Hash, Compare>::LocalGetAllDataInServer,
+                    &set<KeyType, Hash, Compare, Allocator , SharedType>::LocalGetAllDataInServer,
                     this));
             std::function<std::vector<KeyType>(KeyType &, KeyType &)>
-                    containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::LocalContainsInServer, this,
+                    containsInServerFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalContainsInServer, this,
                                                    std::placeholders::_1,
                                                    std::placeholders::_2));
             std::function<std::pair<bool, KeyType>(void)>
-                    seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirst, this));
+                    seekFirstFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSeekFirst, this));
             std::function<std::pair<bool, KeyType>(void)>
-                    popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::LocalPopFirst, this));
+                    popFirstFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalPopFirst, this));
             std::function<size_t(void)>
-                    sizeFunc(std::bind(&set<KeyType, Hash, Compare>::LocalSize, this));
+                    sizeFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSize, this));
             std::function<std::pair<bool, std::vector<KeyType>>(uint32_t)> localSeekFirstNFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::LocalSeekFirstN, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::LocalSeekFirstN, this,
                               std::placeholders::_1));
             rpc->bind(func_prefix+"_Put", putFunc);
             rpc->bind(func_prefix+"_Get", getFunc);
@@ -411,34 +412,34 @@ void set<KeyType, Hash, Compare>::bind_functions() {
             {
 
                 std::function<void(const tl::request &, KeyType &)> putFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPut, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalPut, this,
                               std::placeholders::_1, std::placeholders::_2));
                 std::function<void(const tl::request &, KeyType &)> getFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalGet, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalGet, this,
                               std::placeholders::_1, std::placeholders::_2));
                 std::function<void(const tl::request &, KeyType &)> eraseFunc(
-                    std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalErase, this,
+                    std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalErase, this,
                               std::placeholders::_1, std::placeholders::_2));
                 std::function<void(const tl::request &)>
                         getAllDataInServerFunc(std::bind(
-                            &set<KeyType, Hash, Compare>::ThalliumLocalGetAllDataInServer,
+                            &set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalGetAllDataInServer,
                             this, std::placeholders::_1));
                 std::function<void(const tl::request &, KeyType &, KeyType &)>
-                        containsInServerFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalContainsInServer, this,
+                        containsInServerFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalContainsInServer, this,
                                                        std::placeholders::_1,
                                                        std::placeholders::_2,
 						       std::placeholders::_3));
                 std::function<void(const tl::request &)>
-                        seekFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirst, this,
+                        seekFirstFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalSeekFirst, this,
 						std::placeholders::_1));
                 std::function<void(const tl::request &)>
-                        popFirstFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalPopFirst, this,
+                        popFirstFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalPopFirst, this,
 					       std::placeholders::_1));
                 std::function<void(const tl::request &)>
-                        sizeFunc(std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSize, this,
+                        sizeFunc(std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalSize, this,
 					   std::placeholders::_1));
                 std::function<void(const tl::request &, uint32_t)> localSeekFirstNFunc(
-                        std::bind(&set<KeyType, Hash, Compare>::ThalliumLocalSeekFirstN, this,
+                        std::bind(&set<KeyType, Hash, Compare, Allocator , SharedType>::ThalliumLocalSeekFirstN, this,
 				  std::placeholders::_1,
 				  std::placeholders::_2));
                 rpc->bind(func_prefix+"_Put", putFunc);

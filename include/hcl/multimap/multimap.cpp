@@ -24,14 +24,13 @@
 #define INCLUDE_HCL_MULTIMAP_MULTIMAP_CPP_
 
 /* Constructor to deallocate the shared memory*/
-template<typename KeyType, typename MappedType, typename Compare>
-multimap<KeyType, MappedType, Compare>::~multimap() {
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::~multimap() {
     this->container::~container();
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
-multimap<KeyType, MappedType,
-         Compare>::multimap(CharStruct name_, uint16_t port)
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::multimap(CharStruct name_, uint16_t port)
                  : container(name_,port),mymap() {
     AutoTrace trace = AutoTrace("hcl::multimap");
     if (is_server) {
@@ -48,8 +47,8 @@ multimap<KeyType, MappedType,
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType, typename Compare>
-bool multimap<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalPut(KeyType &key,
                                                       MappedType &data) {
     AutoTrace trace = AutoTrace("hcl::multimap::Put(local)", key, data);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
@@ -58,7 +57,8 @@ bool multimap<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
     if (iterator != mymap->end()) {
         mymap->erase(iterator);
     }
-    mymap->insert(std::pair<KeyType, MappedType>(key, data));
+    auto value = GetData<Allocator, MappedType, SharedType>(data);
+    mymap->insert(std::pair<KeyType, MappedType>(key, value));
     return true;
 }
 
@@ -69,8 +69,8 @@ bool multimap<KeyType, MappedType, Compare>::LocalPut(KeyType &key,
  * @param data, the value for put
  * @return bool, true if Put was successful else false.
  */
-template<typename KeyType, typename MappedType, typename Compare>
-bool multimap<KeyType, MappedType, Compare>::Put(KeyType &key,
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+bool multimap<KeyType, MappedType, Compare, Allocator , SharedType>::Put(KeyType &key,
                                                  MappedType &data) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = static_cast<uint16_t>(key_hash % num_servers);
@@ -90,9 +90,9 @@ bool multimap<KeyType, MappedType, Compare>::Put(KeyType &key,
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-multimap<KeyType, MappedType, Compare>::LocalGet(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGet(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::multimap::Get(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
@@ -111,9 +111,9 @@ multimap<KeyType, MappedType, Compare>::LocalGet(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-multimap<KeyType, MappedType, Compare>::Get(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::Get(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -126,9 +126,9 @@ multimap<KeyType, MappedType, Compare>::Get(KeyType &key) {
     }
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-multimap<KeyType, MappedType, Compare>::LocalErase(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalErase(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::multimap::Erase(local)", key);
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
             lock(*mutex);
@@ -136,9 +136,9 @@ multimap<KeyType, MappedType, Compare>::LocalErase(KeyType &key) {
     return std::pair<bool, MappedType>(s > 0, MappedType());
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::pair<bool, MappedType>
-multimap<KeyType, MappedType, Compare>::Erase(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::Erase(KeyType &key) {
     size_t key_hash = keyHash(key);
     uint16_t key_int = key_hash % num_servers;
     if (is_local(key_int)) {
@@ -157,9 +157,9 @@ multimap<KeyType, MappedType, Compare>::Erase(KeyType &key) {
  * @return return a pair of bool and Value. If bool is true then data was
  * found and is present in value part else bool is set to false
  */
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType, Compare>::Contains(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::Contains(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::multimap::Contains", key);
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
@@ -177,9 +177,9 @@ multimap<KeyType, MappedType, Compare>::Contains(KeyType &key) {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType, Compare>::GetAllData() {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::GetAllData() {
     AutoTrace trace = AutoTrace("hcl::multimap::GetAllData");
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
@@ -196,10 +196,9 @@ multimap<KeyType, MappedType, Compare>::GetAllData() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType,
-         Compare>::LocalContainsInServer(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalContainsInServer(KeyType &key) {
     AutoTrace trace = AutoTrace("hcl::multimap::ContainsInServer", key);
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
@@ -233,10 +232,9 @@ multimap<KeyType, MappedType,
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType,
-         Compare>::ContainsInServer(KeyType &key) {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::ContainsInServer(KeyType &key) {
     if (is_local()) {
         return LocalContainsInServer(key);
     }
@@ -248,9 +246,9 @@ multimap<KeyType, MappedType,
     }
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGetAllDataInServer() {
     AutoTrace trace = AutoTrace("hcl::multimap::GetAllDataInServer");
     std::vector<std::pair<KeyType, MappedType>> final_values =
             std::vector<std::pair<KeyType, MappedType>>();
@@ -268,9 +266,9 @@ multimap<KeyType, MappedType, Compare>::LocalGetAllDataInServer() {
     return final_values;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
 std::vector<std::pair<KeyType, MappedType>>
-multimap<KeyType, MappedType, Compare>::GetAllDataInServer() {
+multimap<KeyType, MappedType, Compare, Allocator , SharedType>::GetAllDataInServer() {
     if (is_local()) {
         return LocalGetAllDataInServer();
     }
@@ -281,39 +279,39 @@ multimap<KeyType, MappedType, Compare>::GetAllDataInServer() {
     }
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
-void multimap<KeyType, MappedType, Compare>::construct_shared_memory() {
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void multimap<KeyType, MappedType, Compare, Allocator , SharedType>::construct_shared_memory() {
     ShmemAllocator alloc_inst(segment.get_segment_manager());
     /* Construct Multimap in the shared memory space. */
     mymap = segment.construct<MyMap>(name.c_str())(Compare(), alloc_inst);
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
-void multimap<KeyType, MappedType, Compare>::open_shared_memory() {
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void multimap<KeyType, MappedType, Compare, Allocator , SharedType>::open_shared_memory() {
     std::pair<MyMap*, boost::interprocess:: managed_mapped_file::size_type>
             res;
     res = segment.find<MyMap>(name.c_str());
     mymap = res.first;
 }
 
-template<typename KeyType, typename MappedType, typename Compare>
-void multimap<KeyType, MappedType, Compare>::bind_functions() {
+template<typename KeyType, typename MappedType, typename Compare, typename Allocator , typename SharedType>
+void multimap<KeyType, MappedType, Compare, Allocator , SharedType>::bind_functions() {
     /* Create a RPC server and map the methods to it. */
     switch (HCL_CONF->RPC_IMPLEMENTATION) {
 #ifdef HCL_ENABLE_RPCLIB
         case RPCLIB: {
             std::function<bool(KeyType &, MappedType &)> putFunc(
-                    std::bind(&multimap<KeyType, MappedType, Compare>::LocalPut, this,
+                    std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalPut, this,
                               std::placeholders::_1, std::placeholders::_2));
             std::function<std::pair<bool, MappedType>(KeyType &)> getFunc(
-                    std::bind(&multimap<KeyType, MappedType, Compare>::LocalGet, this,
+                    std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGet, this,
                               std::placeholders::_1));
             std::function<std::pair<bool, MappedType>(KeyType &)> eraseFunc(
-                    std::bind(&multimap<KeyType, MappedType, Compare>::LocalErase, this,
+                    std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalErase, this,
                               std::placeholders::_1));
             std::function<std::vector<std::pair<KeyType, MappedType>>(void)>
                     getAllDataInServerFunc(std::bind(
-                    &multimap<KeyType, MappedType, Compare>::LocalGetAllDataInServer,
+                    &multimap<KeyType, MappedType, Compare, Allocator , SharedType>::LocalGetAllDataInServer,
                     this));
             std::function<std::vector<std::pair<KeyType, MappedType>>(KeyType &)>
                     containsInServerFunc(std::bind(&multimap<KeyType, MappedType,
@@ -338,18 +336,18 @@ void multimap<KeyType, MappedType, Compare>::bind_functions() {
             {
 
                     std::function<void(const tl::request &, KeyType &, MappedType &)> putFunc(
-                        std::bind(&multimap<KeyType, MappedType, Compare>::ThalliumLocalPut, this,
+                        std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::ThalliumLocalPut, this,
                                   std::placeholders::_1, std::placeholders::_2,
                                   std::placeholders::_3));
                     std::function<void(const tl::request &, KeyType &)> getFunc(
-                        std::bind(&multimap<KeyType, MappedType, Compare>::ThalliumLocalGet, this,
+                        std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::ThalliumLocalGet, this,
                                   std::placeholders::_1, std::placeholders::_2));
                     std::function<void(const tl::request &, KeyType &)> eraseFunc(
-                        std::bind(&multimap<KeyType, MappedType, Compare>::ThalliumLocalErase, this,
+                        std::bind(&multimap<KeyType, MappedType, Compare, Allocator , SharedType>::ThalliumLocalErase, this,
                                   std::placeholders::_1, std::placeholders::_2));
                     std::function<void(const tl::request &)>
                             getAllDataInServerFunc(std::bind(
-                                &multimap<KeyType, MappedType, Compare>::ThalliumLocalGetAllDataInServer,
+                                &multimap<KeyType, MappedType, Compare, Allocator , SharedType>::ThalliumLocalGetAllDataInServer,
                                 this, std::placeholders::_1));
                     std::function<void(const tl::request &, KeyType &)>
                             containsInServerFunc(std::bind(&multimap<KeyType, MappedType,
