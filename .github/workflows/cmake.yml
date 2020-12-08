@@ -42,10 +42,10 @@ jobs:
         uses: actions/setup-python@v1
 
       - uses: satackey/action-docker-layer-caching@v0.0.10
-          # Ignore the failure of a step and avoid terminating the job.
-          continue-on-error: true
-          with:
-            key: hcl-docker-image-{hash}
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+        with:
+          key: hcl-docker-image-{hash}
 
 #      - name: Cache Spack packages
 #        uses: actions/cache@v2
