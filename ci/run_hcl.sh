@@ -1,6 +1,5 @@
 #!/bin/bash
 
-mkdir build
 pushd build
 
 if [ "${HCL_ENABLE_RPCLIB}" = "ON" ]; then
