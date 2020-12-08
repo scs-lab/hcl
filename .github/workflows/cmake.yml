@@ -20,6 +20,7 @@ jobs:
     container:
       image: hdevarajan92/hcl:gcc8
     strategy:
+      fail-fast: false
       matrix:
         include:
           - RPCLIB: ON
