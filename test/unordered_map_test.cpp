@@ -1,24 +1,15 @@
-/*
- * Copyright (C) 2019  SCS Lab <scs-help@cs.iit.edu>, Hariharan
- * Devarajan <hdevarajan@hawk.iit.edu>, Keith Bateman
- * <kbateman@hawk.iit.edu>, Xian-He Sun <sun@iit.edu>
- *
- * This file is part of HCL
- * 
- * HCL is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
- */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Distributed under BSD 3-Clause license.                                   *
+ * Copyright by The HDF Group.                                               *
+ * Copyright by the Illinois Institute of Technology.                        *
+ * All rights reserved.                                                      *
+ *                                                                           *
+ * This file is part of Hermes. The full Hermes copyright notice, including  *
+ * terms governing use, modification, and redistribution, is contained in    *
+ * the COPYING file, which can be found at the top directory. If you do not  *
+ * have access to the file, you may request a copy from help@hdfgroup.org.   *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -112,15 +103,7 @@ int main (int argc,char* argv[])
     bool is_server=(my_rank+1) % ranks_per_server == 0;
     int my_server=my_rank / ranks_per_server;
     int num_servers=comm_size/ranks_per_server;
-
-    // The following is used to switch to 40g network on Ares.
-    // This is necessary when we use RoCE on Ares.
     std::string proc_name = std::string(processor_name);
-    /*int split_loc = proc_name.find('.');
-    std::string node_name = proc_name.substr(0, split_loc);
-    std::string extra_info = proc_name.substr(split_loc+1, string::npos);
-    proc_name = node_name + "-40g." + extra_info;*/
-
     size_t size_of_elem = sizeof(int);
 
     printf("rank %d, is_server %d, my_server %d, num_servers %d\n",my_rank,is_server,my_server,num_servers);

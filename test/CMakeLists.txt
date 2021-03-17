@@ -1,7 +1,6 @@
 # target_link_libraries(DistributedHashMapTest ${CMAKE_BINARY_DIR}/libhcl.so)
 
-set(examples unordered_map_test unordered_map_string_test map_test queue_test priority_queue_test multimap_test set_test)
-# global_clock_test global_sequence_test
+set(examples unordered_map_test unordered_map_string_test map_test queue_test priority_queue_test multimap_test set_test global_clock_test)
 
 add_custom_target(copy_hostfile)
 add_custom_command(
