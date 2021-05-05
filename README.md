@@ -1,6 +1,6 @@
 # HCL: Hermes Container Library
 
-[![Build Status](https://travis-ci.org/HDFGroup/hcl.svg?branch=dev)](https://travis-ci.org/HDFGroup/hcl)
+[![cmake](https://github.com/scs-lab/hcl/actions/workflows/cmake.yml/badge.svg)](https://github.com/scs-lab/hcl/actions/workflows/cmake.yml)
 
 In order to keep up with the demand for high performance at extreme-scale,
 applications have become very highly distributed. Distributed applications
