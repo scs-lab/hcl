@@ -125,6 +125,9 @@ hcl::unordered_map(std::string name);
 
 See the [wiki](https://github.com/HDFGroup/hcl/wiki) for more information.
 
+## Questions?
+
+Please raise issue for any questions or bugs encountered. Please make sure to assign the issues to [hariharan-devarajan](https://github.com/hariharan-devarajan) username.
 
 ## Refer to this work using this citation
 
